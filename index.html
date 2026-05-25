@@ -5,455 +5,385 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>海外ニュース・デイリーブリーフィング</title>
 <style>
+/* ===== Design tokens ===== */
+:root {
+  --bg:        #0d1117;
+  --sidebar:   #13161f;
+  --panel:     #1c2030;
+  --panel2:    #242840;
+  --border:    #2d3250;
+  --text:      #e2e8f6;
+  --dim:       #8b97b8;
+  --muted:     #505c7a;
+  --accent:    #5b9bff;
+  --accent2:   #3a7be0;
+  --politics:  #e05c5c;
+  --economy:   #f6a035;
+  --fiscal:    #34d399;
+  --market:    #a78bfa;
+  --high:      #34d399;
+  --medium:    #f6a035;
+  --radius:    10px;
+  --shadow:    0 2px 16px rgba(0,0,0,.45);
+}
+@media (prefers-color-scheme: light) {
   :root {
-    --bg: #0f1419;
-    --panel: #1a1f2b;
-    --panel-2: #232a3a;
-    --border: #2d3548;
-    --text: #e6e8ec;
-    --text-dim: #9aa3b2;
-    --accent: #5b9bff;
-    --accent-2: #3a7be0;
-    --politics: #d9534f;
-    --economy: #f0ad4e;
-    --fiscal: #5cb85c;
-    --market: #a78bfa;
-    --unknown: #6c7383;
-    --high: #4caf50;
-    --medium: #f0ad4e;
-    --low: #f44336;
-    --shadow: 0 2px 8px rgba(0,0,0,0.3);
+    --bg:      #f0f2f8;
+    --sidebar: #ffffff;
+    --panel:   #ffffff;
+    --panel2:  #f4f6fc;
+    --border:  #dde0ec;
+    --text:    #1a1e2e;
+    --dim:     #4a5268;
+    --muted:   #8892a8;
+    --shadow:  0 2px 16px rgba(0,0,0,.08);
   }
-  @media (prefers-color-scheme: light) {
-    :root {
-      --bg: #f6f7fa;
-      --panel: #ffffff;
-      --panel-2: #f0f2f7;
-      --border: #d8dde5;
-      --text: #1a1f2b;
-      --text-dim: #5a6275;
-      --shadow: 0 2px 8px rgba(0,0,0,0.06);
-    }
+}
+
+/* ===== Reset ===== */
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic UI","Meiryo",system-ui,sans-serif;
+  font-size:15px;line-height:1.7}
+
+/* ===== App shell ===== */
+.app{display:grid;grid-template-columns:248px 1fr;height:100vh}
+
+/* ===== Sidebar ===== */
+.sidebar{
+  background:var(--sidebar);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  height:100vh;overflow:hidden;
+}
+.sidebar-head{
+  padding:18px 16px 14px;
+  border-bottom:1px solid var(--border);
+  flex-shrink:0;
+}
+.logo{font-size:14px;font-weight:800;letter-spacing:.04em;color:var(--text);margin-bottom:12px}
+.logo span{display:block;font-size:11px;font-weight:400;color:var(--muted);letter-spacing:.01em;margin-top:2px}
+.sidebar-controls{display:flex;gap:6px;align-items:center}
+.sidebar-controls select{
+  flex:1;background:var(--panel2);color:var(--text);
+  border:1px solid var(--border);border-radius:7px;
+  padding:6px 10px;font-size:13px;font-family:inherit;cursor:pointer;
+}
+.sidebar-controls select:hover{border-color:var(--accent)}
+.icon-btn{
+  flex-shrink:0;background:var(--accent);color:#fff;border:none;
+  border-radius:7px;width:34px;height:34px;font-size:15px;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:background .15s;
+}
+.icon-btn:hover{background:var(--accent2)}
+
+/* Country nav */
+#tabs{
+  flex:1;overflow-y:auto;overflow-x:hidden;
+  padding:8px;display:flex;flex-direction:column;gap:2px;
+  scrollbar-width:thin;scrollbar-color:var(--border) transparent;
+}
+#tabs::-webkit-scrollbar{width:4px}
+#tabs::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.tab{
+  display:flex;align-items:center;justify-content:space-between;
+  width:100%;background:transparent;border:1.5px solid transparent;
+  color:var(--dim);padding:8px 10px;border-radius:8px;
+  font-size:13px;font-family:inherit;cursor:pointer;
+  transition:all .15s;text-align:left;white-space:nowrap;
+}
+.tab:hover{background:var(--panel);color:var(--text)}
+.tab.active{background:rgba(91,155,255,.1);color:var(--accent);border-color:rgba(91,155,255,.25);font-weight:700}
+.tab .count{
+  font-size:11px;padding:1px 7px;border-radius:999px;
+  background:var(--panel2);color:var(--muted);flex-shrink:0;margin-left:6px;
+}
+.tab.active .count{background:rgba(91,155,255,.15);color:var(--accent)}
+
+.sidebar-foot{padding:12px;border-top:1px solid var(--border);flex-shrink:0}
+.update-btn{
+  width:100%;background:var(--panel2);color:var(--dim);
+  border:1px solid var(--border);border-radius:8px;
+  padding:9px 14px;font-size:12px;font-weight:600;
+  font-family:inherit;cursor:pointer;transition:all .15s;
+}
+.update-btn:hover{color:var(--text);border-color:var(--dim)}
+
+/* ===== Main ===== */
+.main{display:flex;flex-direction:column;height:100vh;overflow:hidden}
+
+/* Category bar */
+.cat-bar{
+  display:flex;gap:6px;padding:10px 20px;
+  background:var(--bg);border-bottom:1px solid var(--border);
+  flex-shrink:0;overflow-x:auto;scrollbar-width:none;
+}
+.cat-bar::-webkit-scrollbar{display:none}
+.cat-filter{
+  background:transparent;border:1.5px solid var(--border);
+  color:var(--dim);padding:5px 16px;border-radius:999px;
+  font-size:12px;font-weight:600;font-family:inherit;
+  cursor:pointer;white-space:nowrap;transition:all .15s;
+}
+.cat-filter:hover{color:var(--text);border-color:var(--dim)}
+.cat-filter.active{border-width:2px}
+.cat-filter[data-cat="all"].active    {background:var(--accent);color:#fff;border-color:var(--accent)}
+.cat-filter[data-cat="政治"].active   {background:rgba(224,92,92,.12);color:var(--politics);border-color:var(--politics)}
+.cat-filter[data-cat="経済"].active   {background:rgba(246,160,53,.12);color:var(--economy);border-color:var(--economy)}
+.cat-filter[data-cat="財政"].active   {background:rgba(52,211,153,.12);color:var(--fiscal);border-color:var(--fiscal)}
+.cat-filter[data-cat="マーケット"].active{background:rgba(167,139,250,.12);color:var(--market);border-color:var(--market)}
+
+/* Period info */
+.period-bar{
+  padding:5px 20px;font-size:11px;color:var(--muted);
+  background:var(--bg);border-bottom:1px solid var(--border);
+  flex-shrink:0;
+}
+
+/* Scroll area */
+.scroll-area{flex:1;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+.scroll-area::-webkit-scrollbar{width:6px}
+.scroll-area::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+#content{padding:22px 28px 60px;max-width:840px}
+
+/* ===== Country section ===== */
+.country-section{margin-bottom:40px}
+.country-header{
+  display:flex;align-items:center;gap:10px;
+  margin-bottom:14px;padding-bottom:10px;
+  border-bottom:2px solid var(--border);
+}
+.country-title{font-size:17px;font-weight:800;letter-spacing:-.02em}
+.country-count{
+  font-size:11px;color:var(--muted);background:var(--panel2);
+  padding:2px 9px;border-radius:999px;
+}
+.country-notes{
+  background:var(--panel2);border-left:3px solid var(--muted);
+  padding:8px 12px;margin-bottom:12px;font-size:12px;
+  color:var(--dim);border-radius:0 6px 6px 0;
+}
+
+/* ===== Card ===== */
+.card{
+  background:var(--panel);border:1px solid var(--border);
+  border-left-width:3px;border-radius:var(--radius);
+  padding:16px 18px;margin-bottom:10px;
+  box-shadow:var(--shadow);transition:transform .12s,box-shadow .12s;
+  border-left-color:var(--border);
+}
+.card:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(0,0,0,.5)}
+.card.cat-政治   {border-left-color:var(--politics)}
+.card.cat-経済   {border-left-color:var(--economy)}
+.card.cat-財政   {border-left-color:var(--fiscal)}
+.card.cat-マーケット{border-left-color:var(--market)}
+.card.confidence-unknown{opacity:.7}
+
+.card-head{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start;margin-bottom:8px}
+.card-title{font-size:15px;font-weight:700;line-height:1.45;flex:1 1 auto;min-width:0}
+.badges{display:flex;gap:5px;flex-wrap:wrap;flex-shrink:0;align-items:center}
+.badge{display:inline-block;font-size:10px;font-weight:700;padding:2px 9px;border-radius:999px;white-space:nowrap}
+.badge-政治   {background:rgba(224,92,92,.15);color:var(--politics)}
+.badge-経済   {background:rgba(246,160,53,.15);color:var(--economy)}
+.badge-財政   {background:rgba(52,211,153,.15);color:var(--fiscal)}
+.badge-マーケット{background:rgba(167,139,250,.15);color:var(--market)}
+.badge-conf{background:var(--panel2);color:var(--muted);font-size:10px;padding:2px 8px;border-radius:999px}
+.badge-conf.high  {background:rgba(52,211,153,.1);color:var(--high)}
+.badge-conf.medium{background:rgba(246,160,53,.1);color:var(--medium)}
+
+.card-summary{font-size:14px;line-height:1.7;color:var(--text);margin-bottom:6px}
+
+details.bg-detail{margin-top:8px}
+details.bg-detail summary{
+  font-size:11px;font-weight:600;color:var(--muted);
+  cursor:pointer;list-style:none;display:flex;align-items:center;gap:5px;
+  user-select:none;transition:color .15s;
+}
+details.bg-detail summary:hover{color:var(--dim)}
+details.bg-detail summary::before{content:"▶";font-size:8px;transition:transform .15s;display:inline-block}
+details.bg-detail[open] summary::before{transform:rotate(90deg)}
+details.bg-detail summary::-webkit-details-marker{display:none}
+.card-bg{
+  font-size:13px;color:var(--dim);background:var(--panel2);
+  padding:10px 12px;border-radius:7px;margin-top:6px;line-height:1.65;
+}
+
+.card-sources{margin-top:10px;display:flex;flex-wrap:wrap;gap:5px}
+.card-sources a{
+  font-size:11px;color:var(--muted);background:var(--panel2);
+  border:1px solid var(--border);padding:3px 10px;border-radius:999px;
+  text-decoration:none;transition:all .15s;
+}
+.card-sources a::before{content:"↗ ";font-size:10px}
+.card-sources a:hover{color:var(--accent);border-color:var(--accent)}
+
+.empty-state{text-align:center;padding:60px 20px;color:var(--muted);font-size:14px}
+.footer-note{padding:16px 28px 32px;font-size:11px;color:var(--muted);border-top:1px solid var(--border);max-width:840px}
+
+/* ===== Modal ===== */
+.modal-backdrop{
+  position:fixed;inset:0;background:rgba(0,0,0,.65);
+  display:none;align-items:center;justify-content:center;z-index:200;padding:16px;
+}
+.modal-backdrop.open{display:flex}
+.modal{
+  background:var(--panel);border:1px solid var(--border);
+  border-radius:14px;max-width:620px;width:100%;
+  max-height:85vh;overflow-y:auto;padding:24px;
+  box-shadow:0 16px 48px rgba(0,0,0,.55);
+}
+.modal h2{font-size:16px;margin-bottom:6px}
+.modal p{font-size:13px;color:var(--dim);margin-bottom:12px}
+.modal textarea{
+  width:100%;min-height:200px;background:var(--panel2);color:var(--text);
+  border:1px solid var(--border);border-radius:8px;padding:12px;
+  font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  font-size:12px;line-height:1.5;resize:vertical;
+}
+.modal-actions{display:flex;gap:8px;margin-top:12px;justify-content:flex-end}
+button{
+  background:var(--panel2);color:var(--text);border:1px solid var(--border);
+  border-radius:8px;padding:8px 16px;font-size:13px;font-family:inherit;
+  cursor:pointer;transition:all .15s;
+}
+button:hover{border-color:var(--accent)}
+button.primary{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:600}
+button.primary:hover{background:var(--accent2);border-color:var(--accent2)}
+
+/* ===== Toast ===== */
+.toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+  background:var(--accent);color:#fff;padding:10px 22px;
+  border-radius:999px;font-size:13px;font-weight:600;
+  opacity:0;transition:opacity .2s;z-index:300;pointer-events:none;
+}
+.toast.show{opacity:1}
+
+/* ===== Mobile ===== */
+@media(max-width:767px){
+  .app{grid-template-columns:1fr;grid-template-rows:auto 1fr;height:100dvh}
+  .sidebar{
+    height:auto;flex-direction:column;
+    border-right:none;border-bottom:1px solid var(--border);
   }
-  * { box-sizing: border-box; }
-  html, body {
-    margin: 0; padding: 0;
-    background: var(--bg);
-    color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", "Meiryo", system-ui, sans-serif;
-    font-size: 15px;
-    line-height: 1.6;
+  .sidebar-head{padding:12px 14px 10px}
+  .logo span{display:none}
+  #tabs{
+    flex-direction:row;overflow-x:auto;overflow-y:hidden;
+    padding:6px 10px;max-height:none;
+    scrollbar-width:none;
   }
-  header {
-    background: linear-gradient(135deg, var(--panel) 0%, var(--panel-2) 100%);
-    border-bottom: 1px solid var(--border);
-    padding: 16px 20px 12px;
-    position: sticky;
-    top: 0;
-    z-index: 50;
-    box-shadow: var(--shadow);
-  }
-  .header-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    align-items: center;
-    justify-content: space-between;
-  }
-  h1 {
-    margin: 0;
-    font-size: 18px;
-    font-weight: 700;
-    letter-spacing: 0.02em;
-  }
-  h1 .sub { font-size: 12px; font-weight: 400; color: var(--text-dim); margin-left: 8px; }
-  .controls {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    align-items: center;
-  }
-  select, button {
-    background: var(--panel-2);
-    color: var(--text);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 6px 12px;
-    font-size: 14px;
-    font-family: inherit;
-    cursor: pointer;
-    transition: all 0.15s;
-  }
-  select:hover, button:hover {
-    border-color: var(--accent);
-  }
-  button.primary {
-    background: var(--accent);
-    color: white;
-    border-color: var(--accent);
-    font-weight: 600;
-  }
-  button.primary:hover {
-    background: var(--accent-2);
-    border-color: var(--accent-2);
-  }
-  .period-info {
-    font-size: 12px;
-    color: var(--text-dim);
-    margin-top: 8px;
-  }
-  .tabs {
-    display: flex;
-    gap: 4px;
-    overflow-x: auto;
-    overflow-y: hidden;
-    padding: 8px 12px 4px;
-    background: var(--bg);
-    border-bottom: 1px solid var(--border);
-    position: sticky;
-    top: 0;
-    z-index: 49;
-    scrollbar-width: thin;
-  }
-  .tabs::-webkit-scrollbar { height: 4px; }
-  .tabs::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-  .tab {
-    background: transparent;
-    border: 1px solid transparent;
-    color: var(--text-dim);
-    padding: 6px 14px;
-    border-radius: 999px;
-    white-space: nowrap;
-    font-size: 13px;
-    cursor: pointer;
-    transition: all 0.15s;
-    flex-shrink: 0;
-  }
-  .tab:hover {
-    color: var(--text);
-    background: var(--panel-2);
-  }
-  .tab.active {
-    background: var(--accent);
-    color: white;
-    border-color: var(--accent);
-    font-weight: 600;
-  }
-  .tab .count {
-    margin-left: 6px;
-    font-size: 11px;
-    opacity: 0.85;
-  }
-  main {
-    max-width: 980px;
-    margin: 0 auto;
-    padding: 16px 16px 80px;
-  }
-  .filter-bar {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 16px;
-    flex-wrap: wrap;
-  }
-  .cat-filter {
-    background: var(--panel-2);
-    border: 1px solid var(--border);
-    color: var(--text-dim);
-    padding: 4px 12px;
-    border-radius: 999px;
-    font-size: 12px;
-    cursor: pointer;
-  }
-  .cat-filter.active {
-    color: var(--text);
-    border-color: var(--accent);
-    background: var(--panel);
-  }
-  .country-section {
-    margin-bottom: 28px;
-  }
-  .country-title {
-    font-size: 18px;
-    font-weight: 700;
-    margin: 16px 0 12px;
-    padding-bottom: 6px;
-    border-bottom: 2px solid var(--accent);
-  }
-  .country-notes {
-    background: var(--panel-2);
-    border-left: 3px solid var(--unknown);
-    padding: 8px 12px;
-    margin: 0 0 12px;
-    font-size: 13px;
-    color: var(--text-dim);
-    border-radius: 4px;
-  }
-  .card {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 14px 16px;
-    margin-bottom: 12px;
-    box-shadow: var(--shadow);
-  }
-  .card.confidence-unknown {
-    opacity: 0.75;
-  }
-  .card-head {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    align-items: center;
-    margin-bottom: 8px;
-  }
-  .card-title {
-    font-size: 15px;
-    font-weight: 700;
-    flex: 1 1 auto;
-    min-width: 0;
-    line-height: 1.4;
-  }
-  .badge {
-    display: inline-block;
-    font-size: 11px;
-    padding: 2px 8px;
-    border-radius: 999px;
-    font-weight: 600;
-    white-space: nowrap;
-  }
-  .badge-政治 { background: rgba(217,83,79,0.15); color: var(--politics); border: 1px solid var(--politics); }
-  .badge-経済 { background: rgba(240,173,78,0.15); color: var(--economy); border: 1px solid var(--economy); }
-  .badge-財政 { background: rgba(92,184,92,0.15); color: var(--fiscal); border: 1px solid var(--fiscal); }
-  .badge-マーケット { background: rgba(167,139,250,0.15); color: var(--market); border: 1px solid var(--market); }
-  .badge-conf {
-    font-size: 10px;
-    padding: 1px 6px;
-    background: var(--panel-2);
-    color: var(--text-dim);
-    border: 1px solid var(--border);
-  }
-  .badge-conf.high { color: var(--high); border-color: var(--high); }
-  .badge-conf.medium { color: var(--medium); border-color: var(--medium); }
-  .badge-conf.unknown { color: var(--unknown); }
-  .card-summary { font-size: 14px; margin: 6px 0 8px; }
-  .card-bg {
-    font-size: 13px;
-    color: var(--text-dim);
-    background: var(--panel-2);
-    padding: 8px 10px;
-    border-radius: 4px;
-    margin: 8px 0;
-  }
-  .card-bg-label { font-weight: 600; color: var(--text); margin-right: 4px; }
-  .card-sources {
-    font-size: 12px;
-    margin-top: 8px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-  }
-  .card-sources a {
-    color: var(--accent);
-    text-decoration: none;
-    background: var(--panel-2);
-    border: 1px solid var(--border);
-    padding: 3px 8px;
-    border-radius: 4px;
-    transition: all 0.15s;
-  }
-  .card-sources a:hover {
-    background: var(--accent);
-    color: white;
-    border-color: var(--accent);
-  }
-  .card-sources a::before { content: "🔗 "; font-size: 10px; }
-  .empty-state {
-    text-align: center;
-    padding: 60px 20px;
-    color: var(--text-dim);
-  }
-  .modal-backdrop {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.55);
-    display: none;
-    align-items: center;
-    justify-content: center;
-    z-index: 100;
-    padding: 16px;
-  }
-  .modal-backdrop.open { display: flex; }
-  .modal {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    max-width: 640px;
-    width: 100%;
-    max-height: 85vh;
-    overflow-y: auto;
-    padding: 20px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-  }
-  .modal h2 { margin: 0 0 8px; font-size: 17px; }
-  .modal p { font-size: 13px; color: var(--text-dim); margin: 0 0 12px; }
-  .modal textarea {
-    width: 100%;
-    min-height: 180px;
-    background: var(--panel-2);
-    color: var(--text);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 10px;
-    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-    font-size: 12px;
-    line-height: 1.5;
-    resize: vertical;
-  }
-  .modal-actions {
-    display: flex;
-    gap: 8px;
-    margin-top: 12px;
-    justify-content: flex-end;
-    flex-wrap: wrap;
-  }
-  .copied-toast {
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: var(--accent);
-    color: white;
-    padding: 10px 20px;
-    border-radius: 999px;
-    font-size: 13px;
-    font-weight: 600;
-    opacity: 0;
-    transition: opacity 0.2s;
-    z-index: 200;
-    pointer-events: none;
-  }
-  .copied-toast.show { opacity: 1; }
-  .footer-note {
-    margin-top: 24px;
-    padding: 12px;
-    border-top: 1px solid var(--border);
-    font-size: 11px;
-    color: var(--text-dim);
-    text-align: center;
-  }
-  @media (max-width: 600px) {
-    h1 { font-size: 16px; }
-    .controls { width: 100%; justify-content: flex-start; }
-    .card-title { font-size: 14px; }
-    main { padding: 12px 12px 80px; }
-  }
+  #tabs::-webkit-scrollbar{display:none}
+  .tab{flex-shrink:0;width:auto;padding:6px 12px;font-size:12px}
+  .sidebar-foot{display:none}
+  .main{height:auto;overflow:hidden}
+  .scroll-area{height:calc(100dvh - 160px)}
+  #content{padding:14px 14px 60px}
+  .cat-bar{padding:8px 12px}
+  .period-bar{padding:4px 14px;font-size:10px}
+}
 </style>
 </head>
 <body>
-<header>
-  <div class="header-row">
-    <h1>海外ニュース・デイリーブリーフィング <span class="sub">17か国・地域</span></h1>
-    <div class="controls">
-      <select id="date-select" aria-label="日付選択"></select>
-      <button id="update-now-btn" class="primary" title="この日付・国の最新情報を取りに行く">↻ 今すぐ更新</button>
+<div class="app">
+
+  <!-- ===== Sidebar ===== -->
+  <aside class="sidebar">
+    <div class="sidebar-head">
+      <div class="logo">🌐 海外ニュース<span>デイリーブリーフィング・17か国</span></div>
+      <div class="sidebar-controls">
+        <select id="date-select" aria-label="日付選択"></select>
+        <button id="update-now-btn" class="icon-btn" title="今すぐ更新">↻</button>
+      </div>
     </div>
-  </div>
-  <div class="period-info" id="period-info"></div>
-</header>
+    <nav id="tabs" role="tablist" aria-label="国・地域を選択"></nav>
+    <div class="sidebar-foot">
+      <button class="update-btn" id="update-now-btn-2">↻ 今すぐ更新</button>
+    </div>
+  </aside>
 
-<nav class="tabs" id="tabs" role="tablist"></nav>
-
-<main>
-  <div class="filter-bar" id="filter-bar">
-    <button class="cat-filter active" data-cat="all">すべて</button>
-    <button class="cat-filter" data-cat="政治">政治</button>
-    <button class="cat-filter" data-cat="経済">経済</button>
-    <button class="cat-filter" data-cat="財政">財政</button>
-    <button class="cat-filter" data-cat="マーケット">マーケット</button>
-  </div>
-  <div id="content"></div>
-  <div class="footer-note" id="footer-note"></div>
-</main>
-
-<div class="modal-backdrop" id="modal" role="dialog" aria-modal="true">
-  <div class="modal">
-    <h2>↻ 今すぐ更新</h2>
-    <p>このアプリ自体は LLM を直接呼べないため、下のプロンプトを Cowork に貼って実行してください。実行すると新しいレポートが生成され、このアプリの次回起動時に表示されます。</p>
-    <p><strong>対象:</strong> <span id="modal-target"></span></p>
-    <textarea id="prompt-text" readonly></textarea>
-    <div class="modal-actions">
-      <button id="copy-btn" class="primary">📋 プロンプトをコピー</button>
-      <button id="close-modal">閉じる</button>
+  <!-- ===== Main ===== -->
+  <div class="main">
+    <div class="cat-bar" id="filter-bar" role="group" aria-label="カテゴリ絞り込み">
+      <button class="cat-filter active" data-cat="all">すべて</button>
+      <button class="cat-filter" data-cat="政治">🏛 政治</button>
+      <button class="cat-filter" data-cat="経済">📈 経済</button>
+      <button class="cat-filter" data-cat="財政">🏦 財政</button>
+      <button class="cat-filter" data-cat="マーケット">💹 マーケット</button>
+    </div>
+    <div class="period-bar" id="period-info"></div>
+    <div class="scroll-area">
+      <div id="content"></div>
+      <div class="footer-note" id="footer-note"></div>
     </div>
   </div>
 </div>
 
-<div class="copied-toast" id="toast">コピーしました</div>
+<!-- ===== Modal ===== -->
+<div class="modal-backdrop" id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div class="modal">
+    <h2 id="modal-title">↻ 今すぐ更新</h2>
+    <p>このアプリは LLM を直接呼べないため、下のプロンプトを Claude に貼り付けて実行してください。</p>
+    <p><strong>対象:</strong> <span id="modal-target"></span></p>
+    <textarea id="prompt-text" readonly></textarea>
+    <div class="modal-actions">
+      <button id="close-modal">閉じる</button>
+      <button id="copy-btn" class="primary">📋 プロンプトをコピー</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast">コピーしました</div>
 
 <!-- ========== DATA BLOCKS START ========== -->
 <!-- Each daily briefing is embedded as a script tag with id=briefing-YYYY-MM-DD -->
 <!-- The scheduled task appends a new block here every morning at 5 AM JST. -->
 
-<script type="application/json" id="briefing-2026-05-24">{"date":"2026-05-24","generated_at":"2026-05-24T23:52:00+09:00","period":{"from":"2026-05-23 00:00 JST","to":"2026-05-24 23:52 JST"},"countries":{"EU":{"label":"EU(欧州連合)","items":[{"title":"対米通商: 米国産工業品の関税撤廃で EU 理事会と欧州議会が合意","category":"政治","summary":"EU 理事会と欧州議会は、米国産すべての工業品について関税を撤廃し、一部の米国産農産物・水産物について優遇市場アクセスを与えることで合意した。","background":"対米通商緊張の緩和策の一環で、EU 側が一方的に関税を引き下げる形。EU の輸出競争力(自動車・機械)を維持し、対米交渉での譲歩を引き出す狙いと整理される。","sources":[{"label":"European Commission press corner","url":"https://ec.europa.eu/commission/presscorner/detail/en/mex_26_840"}],"confidence":"high"},{"title":"外資審査強化の合意","category":"政治","summary":"欧州議会(MEPs)は、防衛、半導体、AI、重要鉱物、金融サービスといった戦略分野を対象に、リスクのある外国投資から保護する EU と理事会の合意案を採決した。","background":"産業政策と経済安全保障の一体化(de-risking)路線の制度化。米国の CFIUS 型レビューに近い枠組みを EU 全域に拡張する性格。","sources":[{"label":"European Commission press corner","url":"https://ec.europa.eu/commission/presscorner/detail/en/mex_26_840"}],"confidence":"high"},{"title":"欧州委員会、2026 年 EU 成長見通しを 1.4% → 1.1% に下方修正","category":"経済","summary":"ドイツ 0.6%、フランス 0.8%、イタリア 0.5% と主要 3 か国の弱さが目立つ見通し。経済担当委員ドンブロフスキスは「紛争(中東情勢)が長期化すれば成長率は半減する可能性」と警告。","background":"中東情勢(ホルムズ海峡の不安定化、エネルギー価格)の供給ショックがユーロ圏の輸入物価とマージンを圧迫する経路。製造業比率の高いドイツ・イタリアが特に脆弱。","sources":[{"label":"Pravda EU(欧州委員会発表をまとめた記事)","url":"https://eu.news-pravda.com/eu/2026/05/21/198330.html"}],"confidence":"medium"},{"title":"肥料価格高騰対策","category":"経済","summary":"欧州委員会は EU 内で上昇する肥料価格に対処する戦略を発表。","background":"ロシア・ベラルーシ依存の高い窒素肥料・カリ肥料の供給途絶リスクを念頭に、域内生産確保・備蓄・代替供給先確保のパッケージと位置付けられる。","sources":[{"label":"European Commission press corner","url":"https://ec.europa.eu/commission/presscorner/detail/en/mex_26_840"}],"confidence":"high"},{"title":"欧州財政委員会(EFB)、2026 年ユーロ圏の財政スタンスについて『防衛を除き引き締め』を提言","category":"財政","summary":"緩やかな GDP 成長と堅調な労働市場が見込まれる一方、債務持続性リスクを警戒。『ReArm Europe』イニシアチブの下での国家エスケープ条項による財政拡張は防衛支出に厳しく限定すべきとした。","background":"新財政ルール(債務削減経路)と防衛強化(EU 全体の安全保障コスト)のトレードオフ。財政の柔軟性を限定的・条件付きにして信認を維持する設計。","sources":[{"label":"European Fiscal Board(欧州委員会サイト)","url":"https://commission.europa.eu/publications/european-fiscal-board-assesses-appropriate-fiscal-stance-euro-area-2026_en"}],"confidence":"high"},{"title":"5/22–23 のインフォーマル ECOFIN / ユーログループ会合","category":"財政","summary":"財政政策協調の議論が活発化していると報じられた(具体的合意の確認は不能)。","background":"","sources":[{"label":"European Commission press corner","url":"https://ec.europa.eu/commission/presscorner/detail/en/mex_26_840"}],"confidence":"medium"},{"title":"EUR/USD: 1.0845 (+0.4%) — EUR/JPY: 163.20円 (+0.7%)","category":"マーケット","summary":"米雇用指標の軟化でドル売り優勢、ユーロ買いが進む。EUR/JPY は 163.20 円で約 1 か月ぶりの円安水準。独 10 年債利回り 2.45%(前日比 +3bp)。DAX は前日比 +0.6%。","background":"対米通商の関税撤廃合意がユーロの買い材料となった一方、EU 成長率の下方修正(1.4%→1.1%)で上値は限定的。独金利上昇→ユーロ買い→円売りという経路で円安が進行。インポーターや外貨建て資産保有者には円安コストが続く局面。","sources":[{"label":"Reuters Markets","url":"https://www.reuters.com/markets/"}],"confidence":"medium"}],"notes":""},"イギリス":{"label":"イギリス","items":[{"title":"暗号資産献金の禁止","category":"政治","summary":"スターマー首相は、英国政界への外国干渉に関するレビュー公表を受け、暗号資産による政党献金を禁止すると発表した(発表日は本期間直前)。","background":"匿名性が高い暗号資産経由の外国資金流入を遮断し、選挙制度の信頼性を担保するための制度対応。","sources":[{"label":"UK Parliament News","url":"https://www.parliament.uk/business/news/"}],"confidence":"medium"},{"title":"2026 年は保守党にとって『結束 or 分裂』の正念場","category":"政治","summary":"バデノック党首の下で安定を取り戻すか、Reform UK への離反が続いて長期分断に入るかが焦点とする論評。","background":"","sources":[{"label":"politicsuk.com 2026 outlook","url":"https://politicsuk.com/2026-political-predictions/"}],"confidence":"medium"},{"title":"国民の最大関心事は『経済』","category":"経済","summary":"5 月時点の世論調査で、回答者の 53% が経済を『英国が直面するトップ 3 の課題』に挙げ、移民(49%)を上回った(Statista)。","background":"","sources":[{"label":"Statista UK most important issues","url":"https://www.statista.com/statistics/886366/issues-facing-britain/"}],"confidence":"medium"},{"title":"春季財政見通し(Spring Forecast 2026)の継続影響","category":"財政","summary":"3 月発表分でリーブス財務相は、借入を秋季予算より約 180 億ポンド削減、財政『ヘッドルーム』を 217 億ポンド → 236 億ポンドへ拡大したとした。インフレ率は 2026 年に 2.3%、年後半に 2% に到達する見通し。失業率はピーク 5.3% から 2030 年に 4.1% まで低下と想定。","background":"2029/30 年度のデイ・トゥ・デイ財政黒字化目標を堅持しつつ、エネルギー請求の 150 ポンド減免・鉄道運賃凍結でインフレを 0.4 ポイント抑える設計。","sources":[{"label":"GOV.UK Spring Forecast 2026","url":"https://www.gov.uk/government/news/spring-forecast-2026-the-right-economic-plan-for-britain"},{"label":"House of Commons Library 要約","url":"https://commonslibrary.parliament.uk/research-briefings/cbp-10495/"}],"confidence":"high"},{"title":"GBP/USD: 1.2730 (+0.3%) — GBP/JPY: 191.50円 (+0.5%)","category":"マーケット","summary":"ドル安の恩恵でポンド高。GBP/JPY は 191.50 円で約 8 か月ぶりの高水準。英 10 年債利回り 4.30%(前日比 -2bp)でやや低下。FTSE100 は前日比 +0.4%。","background":"BOE の利下げ観測は後退気味で、英金利の相対的高さがポンドの支え。GBP/JPY 上昇は英国への旅行・留学コスト増につながる一方、英国株式・不動産保有者には円建て評価額の押し上げ効果。","sources":[{"label":"Reuters Markets","url":"https://www.reuters.com/markets/"}],"confidence":"medium"}],"notes":""},"スイス":{"label":"スイス","items":[{"title":"EU との二国間協定パッケージを憲法に『経過規定』として組み込み","category":"政治","summary":"議会委員会が、スイス・EU 二国間パッケージを連邦憲法に位置付けるべきと提言。","background":"3 月 2 日にブリュッセルで 18 の協定が署名済み(Bilaterals III)で、電力・健康・食品安全分野を含む単一市場参加を更新する内容。憲法に明記することで、後の国民投票や政権交代に対する安定性を確保する狙い。","sources":[{"label":"SWI swissinfo.ch","url":"https://www.swissinfo.ch/eng/latest-news/"},{"label":"Federal Council EU package","url":"https://www.europa.eda.admin.ch/en/package-switzerland-eu"}],"confidence":"high"},{"title":"第 1 四半期の工業生産が前年比 6.1% 減","category":"経済","summary":"製薬・自動車関連が大きく落ち込む。","background":"スイスフラン高、欧州主要市場の需要低迷、輸出比率の高さが下押し要因として整理される。","sources":[{"label":"SWI swissinfo.ch 最新ニュース","url":"https://www.swissinfo.ch/eng/latest-news/"}],"confidence":"medium"},{"title":"空港旅客が四半期で過去最高の 1,330 万人","category":"経済","summary":"乗継含む、定期+チャーター。","background":"","sources":[{"label":"SWI swissinfo.ch 最新ニュース","url":"https://www.swissinfo.ch/eng/latest-news/"}],"confidence":"medium"},{"title":"本期間に直接該当する SNB/財政当局の新発表は確認できず(参考: 3月会合の見通し)","category":"財政","summary":"SNB は 3 月会合で 2026 年成長率を約 1%、2027 年を約 1.5% と見通し、シュレーゲル総裁は 2026 年中にインフレが再びマイナスに沈む可能性に言及。","background":"","sources":[{"label":"SNB News & publications","url":"https://www.snb.ch/en/news-publications/news"},{"label":"swissinfo Schlegel comments","url":"https://www.swissinfo.ch/eng/snbs-schlegel-says-inflation-rate-may-go-negative-again-in-2026/90812023"}],"confidence":"unknown"},{"title":"USD/CHF: 0.8960 (-0.3%) — CHF/JPY: 175.40円 (+0.3%)","category":"マーケット","summary":"SNB のディスインフレ傾向でフランは対ドルで底堅い。CHF/JPY は 175.40 円。スイス工業生産の落込みは既織り込みで相場への影響限定的。SMI(スイス株)は前日比 +0.2%。","background":"SNB はデフレリスクに備え利下げ余地を温存する姿勢。フランが避難通貨として機能する側面もあり、地政学リスク上昇局面では CHF/JPY が円安フランへ振れやすい構図。対スイス取引・投資のヘッジコストに注意。","sources":[{"label":"Reuters Markets","url":"https://www.reuters.com/markets/"}],"confidence":"medium"}],"notes":"本期間に直接該当する SNB(スイス国立銀行)の新しい政策決定や財政当局の発表は確認できなかった。"},"オーストラリア":{"label":"オーストラリア","items":[{"title":"アルバニージー首相が中東紛争の早期終結を訴え","category":"政治","summary":"『豪州人にも甚大な影響が出ている』と表明(燃料・物価への波及を念頭)。","background":"","sources":[{"label":"Yahoo Finance AU","url":"https://au.finance.yahoo.com/news/rba-interest-rate-decision-live-michele-bullock-tipped-to-bring-australia-back-to-square-one-231214578.html"}],"confidence":"medium"},{"title":"RBA、政策金利を 4.35% へ 3 会合連続利上げ(8 対 1)","category":"経済","summary":"昨年の利下げサイクルを完全に巻き戻し。","background":"2025 年下期の物価加速が 2026 年に持ち越し、中東情勢に伴う燃料・コモディティ高がインフレ圧力を増幅。今後の追加利上げについて 4 大行の見方は分かれており、ウエストパックは 6 月・8 月に各 25bp、計 4.85% を予想。","sources":[{"label":"Yahoo Finance AU(RBA 利上げ報道)","url":"https://au.finance.yahoo.com/news/rba-interest-rate-decision-live-michele-bullock-tipped-to-bring-australia-back-to-square-one-231214578.html"},{"label":"Reserve Bank of Australia","url":"https://www.rba.gov.au/"}],"confidence":"high"},{"title":"2026–27 年度連邦予算(5 月 12 日発表)の継続影響","category":"財政","summary":"チャーマーズ財務相による予算は、勤労所得層減税(個人所得税率 15% → 14%、Working Australian Tax Offset)、150 ドル光熱費補助、3 日分への保育補助拡大、燃料備蓄を 20–32 日から 37 日(ジェット燃料・ディーゼルは 50 日)へ拡張する 100 億ドル措置などを含む。一方でキャピタルゲイン税優遇とネガティブギアリングを部分縮小。財政収支見通しは 2026–27 年度に 315 億豪ドルの赤字、2029–30 年度に 253 億豪ドルへ縮小。","background":"中堅層への所得・生活コスト支援を維持しつつ、CGT/ネガティブギアリングの優遇縮小で住宅価格抑制と歳入確保を狙う設計。","sources":[{"label":"Budget.gov.au 2026–27","url":"https://budget.gov.au/"},{"label":"Wikipedia 2026 Australian federal budget","url":"https://en.wikipedia.org/wiki/2026_Australian_federal_budget"}],"confidence":"high"},{"title":"AUD/USD: 0.6480 (-0.2%) — AUD/JPY: 97.50円 (-0.1%)","category":"マーケット","summary":"RBA 利上げ(4.35%)でオーストラリア金利は主要国で最高水準だが、中東リスクでコモディティ輸出の見通しに不透明感。AUD/JPY は 97.50 円と 100 円割れ継続。ASX200 は前日比 -0.3%。","background":"RBA の連続利上げはAUDを支える一方、中国需要鈍化(鉄鉱石・石炭)と原油高のコスト増が豪景気を圧迫。AUD/JPY が 100 円を明確に割り込む局面ではオーストラリア資産への円建て投資リターンが低下。","sources":[{"label":"Reuters Markets","url":"https://www.reuters.com/markets/"}],"confidence":"medium"}],"notes":""},"ニュージーランド":{"label":"ニュージーランド","items":[{"title":"公共部門改革案の発表準備","category":"政治","summary":"政府は省庁・機関の統合、デジタル化、AI 活用を推進し、公務員数を 2029 年までに『総人口の 1%』相当に削減する目標を示す方針。現在 42 省庁・約 6.3 万人の常勤職員。","background":"連立合意(National・ACT・NZ First)に基づく小さな政府路線。財政再建と並行する行政改革。","sources":[{"label":"Democracy Project NZ Briefing 24 May 2026","url":"https://www.democracyproject.org.nz/p/news-briefing-24-may-2026"},{"label":"RNZ News","url":"https://www.rnz.co.nz/news"}],"confidence":"high"},{"title":"政府ロゴ刷新で英語表記を上位に","category":"政治","summary":"全省庁ウェブサイトのトップに『New Zealand Government』を太字で配置し、その下に『Te Kāwanatanga o Aotearoa』を置く順序へ変更(Goldsmith 閣僚が『2023 年の連立合意』を理由に説明)。","background":"マオリ語政策をめぐる連立内部の調整事項であり、文化政策と統治姿勢の象徴的シフト。","sources":[{"label":"RNZ Political news","url":"https://www.rnz.co.nz/news/political"}],"confidence":"medium"},{"title":"ウェリントン地区の救急医療体制強化","category":"経済","summary":"オークランドに 2 か所の救急ハブ新設、人員増、技術更新の予算手当てを公表。","background":"","sources":[{"label":"RNZ National","url":"https://www.rnz.co.nz/news/national"}],"confidence":"medium"},{"title":"予算デー直前の与党内主導権争い","category":"財政","summary":"ニコラ・ウィリス財務相がここ 1 週間 NZ First/ACT に話題を奪われた状況から、予算公表に向けて主導権を取り戻せるかが焦点と論評。","background":"","sources":[{"label":"Democracy Project NZ Briefing 24 May 2026","url":"https://www.democracyproject.org.nz/p/news-briefing-24-may-2026"}],"confidence":"medium"},{"title":"NZD/USD: 0.5940 (-0.1%) — NZD/JPY: 89.30円 (-0.2%)","category":"マーケット","summary":"NZD は対ドルで小幅軟調。NZD/JPY は 89.30 円。RBNZ の利下げサイクル(現在 3.50%)が継続中でNZDの上値を抑制。NZX50 は前日比 -0.1%。","background":"RBNZ の緩和姿勢と国内景気の弱さが NZD 売り圧力。NZD/JPY が 90 円を下回る局面ではニュージーランド資産の円建てリターンが目減り。予算発表次第でボラティリティが生じる可能性に注意。","sources":[{"label":"Reuters Markets","url":"https://www.reuters.com/markets/"}],"confidence":"medium"}],"notes":""},"カナダ":{"label":"カナダ","items":[{"title":"カーニー首相、コマガタ・マル号事件に関する声明を発表(5 月 23 日)","category":"政治","summary":"1914 年の差別的入国拒否事件への追悼。","background":"","sources":[{"label":"Prime Minister of Canada","url":"https://www.pm.gc.ca/en"}],"confidence":"high"},{"title":"最高裁判事選考の独立諮問委員会メンバー指名(5 月 19 日)","category":"政治","summary":"","background":"","sources":[{"label":"Prime Minister of Canada","url":"https://www.pm.gc.ca/en"}],"confidence":"high"},{"title":"海外直接投資が約 20 年ぶり水準","category":"経済","summary":"カナダは過去 1 年で 970 億ドルの対内 FDI を獲得、4 大陸で 20 件超の経済・防衛パートナーシップを締結。","background":"カーニー政権の『Build Big』産業政策と国防・サプライチェーン外交を結びつけた投資誘致路線。","sources":[{"label":"The Globe and Mail Economy charts","url":"https://www.theglobeandmail.com/business/economy/article-2026-in-charts-for-policy-makers/"}],"confidence":"medium"},{"title":"熟練労働者育成戦略","category":"経済","summary":"数十億ドル規模の新スキル訓練戦略を発表。","background":"","sources":[{"label":"CTV News","url":"https://www.ctvnews.ca/politics/article/carney-liberals-launching-new-skilled-training-strategy-deficit-projected-at-653b/"}],"confidence":"medium"},{"title":"『Canada Strong Fund』(初の国家ソブリン・ウェルス・ファンド)","category":"財政","summary":"連邦が当初 250 億ドル拠出。","background":"戦略分野(クリーンテック、重要鉱物、防衛、AI 等)への長期投資を可能にする受け皿。年金基金型のリスク許容度で『Build Big』を後押し。","sources":[{"label":"Prime Minister of Canada 発表(4/27)","url":"https://www.pm.gc.ca/en/news/news-releases/2026/04/27/prime-minister-carney-announces-canada-strong-fund-canadas-first"}],"confidence":"high"},{"title":"春季経済アップデート 2026","category":"財政","summary":"『Canada strong for all』の名で公開。財政赤字の見通しは一時的に拡大予想(CTV 報道)。","background":"","sources":[{"label":"Spring Economic Update 2026","url":"https://budget.canada.ca/update-miseajour/2026/report-rapport/intro-en.html"},{"label":"CTV News","url":"https://www.ctvnews.ca/politics/article/carney-liberals-launching-new-skilled-training-strategy-deficit-projected-at-653b/"}],"confidence":"high"},{"title":"USD/CAD: 1.3620 (-0.2%) — CAD/JPY: 109.40円 (+0.2%)","category":"マーケット","summary":"原油高がカナダドルを支え、USD/CAD はカナダドル強め。CAD/JPY は 109.40 円。カナダ 10 年債利回り 3.45%(前日比 ±0)。S&P/TSX は前日比 +0.5%。","background":"カナダは産油国であり、中東地政学リスクによる原油高がカナダドルの追い風。対米関税リスクは対ドルの上値を抑制するが、対円では円安基調で CAD/JPY は底堅い。『Canada Strong Fund』など財政拡張がCAD金利の下支えにもなる。","sources":[{"label":"Reuters Markets","url":"https://www.reuters.com/markets/"}],"confidence":"medium"}],"notes":""},"中国":{"label":"中国","items":[{"title":"対米通商: 李成鋼(国際貿易代表)発言など","category":"政治","summary":"SCMP が米中通商摩擦に関する中国側コメントを報道(具体的政策の新発表は本期間に確認できず)。","background":"","sources":[{"label":"SCMP 中国経済セクション","url":"https://www.scmp.com/economy/china-economy"}],"confidence":"medium"},{"title":"第 1 四半期 GDP 成長率 5.0%","category":"経済","summary":"前期(2024Q4 = 過去 3 年で最低の年率)から改善。4 月 CPI は前年比 1.2%、10 年国債利回りは 5/18 時点で 1.75%。","background":"不動産調整・内需不足の根強さに対し、供給側(製造業・ハイテク投資)主導で成長を補う構図。インフレ低位は需給ギャップの広さを示唆。","sources":[{"label":"Caixin Global 経済","url":"https://www.caixinglobal.com/economy/"},{"label":"SCMP 中国経済","url":"https://www.scmp.com/economy/china-economy"}],"confidence":"high"},{"title":"株式市場の調整","category":"経済","summary":"5/18 時点で年初来 5.99% 安。米イラン情勢とホルムズ海峡閉鎖懸念で原油輸入依存の脆弱性が再認識された(2021 年 2 月ピーク比でなお 17% 下)。","background":"","sources":[{"label":"Premia Partners China Outlook 2026","url":"https://www.premia-partners.com/insight/china-market-outlook-2026-positioning-for-china-s-next-chapter"}],"confidence":"medium"},{"title":"不動産デベロッパーが半導体投資へ","category":"経済","summary":"経営難の一部大手が半導体製造分野への投資を発表(SCMP 5/23 報道)。","background":"不動産から『新質生産力』分野への産業転換を促す政策誘導と、地方政府・銀行の救済設計が背景にあると整理。","sources":[{"label":"SCMP 中国","url":"https://www.scmp.com/news/china"}],"confidence":"medium"},{"title":"本期間に新規財政発表は確認できず(参考: 2025年12月中央経済工作会議の方針)","category":"財政","summary":"2025 年 12 月の中央経済工作会議で 2026 年経済方針が決定され、内需振興と『より積極的かつ協調的なマクロ政策』が打ち出されている。","background":"","sources":[{"label":"Caixin: China Sets 2026 Economic Priorities","url":"https://www.caixinglobal.com/2025-12-12/china-sets-2026-economic-priorities-with-demand-revival-at-the-core-102392421.html"},{"label":"Beijing Review","url":"https://www.bjreview.com/Business/202604/t20260421_800435636.html"}],"confidence":"unknown"},{"title":"USD/CNH: 7.2450 (+0.1%) — CNH/JPY: 20.55円 (+0.2%)","category":"マーケット","summary":"人民元は対ドルで小幅下落。CNH/JPY は 20.55 円。上海総合指数は年初来 -5.99%。10 年国債利回り 1.75% と低位を維持。","background":"中国当局は元安を一定程度許容しつつも急落は抑制する姿勢。元安は中国輸出品の競争力を支えるが、対日では輸入物価の上昇要因(原材料・部品)。上海株安と元安の同時進行は中国リスクオフのシグナルとして円の安全資産需要を高める方向に働く。","sources":[{"label":"Reuters Markets","url":"https://www.reuters.com/markets/"}],"confidence":"medium"}],"notes":"本期間に直接該当する新規財政発表は確認できなかった。"},"韓国":{"label":"韓国","items":[{"title":"ソウル市長候補(共に民主党)の鄭垣午氏、若年層・新婚向け住宅対策発表","category":"政治","summary":"家賃補助拡大、住宅供給増、若者向け支援強化を柱に。","background":"6 月の地方選を見据えた、住居コスト負担に直面する都市部の浮動票へのアピール。","sources":[{"label":"The Korea Herald Business/Economy","url":"https://www.koreaherald.com/Business/Economy"}],"confidence":"medium"},{"title":"第 27 回アジア物理オリンピック、釜山で開幕(韓国初開催、27 か国参加)","category":"政治","summary":"","background":"","sources":[{"label":"The Korea Times","url":"https://www.koreatimes.co.kr/southkorea"}],"confidence":"medium"},{"title":"KDI、2026 年成長率見通しを 2.5% に上方修正","category":"経済","summary":"半導体輸出の堅調を主因とする一方、中東情勢長期化によるインフレ・家計負担リスクを警告。","background":"韓国経済の循環は依然『半導体サイクル+原油』依存。輸出主導の回復と、ガソリン・電気料金経由のコストプッシュが綱引きする構図。","sources":[{"label":"Korea Pro","url":"https://koreapro.org/"},{"label":"The Korea Herald","url":"https://www.koreaherald.com/Business/Economy"}],"confidence":"high"},{"title":"外資系企業向け税制優遇とコンプライアンス緩和","category":"財政","summary":"国税庁は、国内投資・若年雇用を前年比 10% 以上増やす外資企業を、1 年間にわたり国際法人税監査の対象から除外。","background":"半導体・バッテリー等の戦略的 FDI 誘致と若年雇用創出のインセンティブ設計。米中対立下の供給網再編で『韓国の魅力』を高める施策と整理。","sources":[{"label":"The Korea Herald Business/Economy","url":"https://www.koreaherald.com/Business/Economy"}],"confidence":"high"},{"title":"USD/KRW: 1,362 (-0.2%) — KRW/JPY: 10.92円 (+0.2%)","category":"マーケット","summary":"ウォンは対ドルで小幅強含み。KRW/JPY は 10.92 円。KOSPI は前日比 +0.8%と半導体関連が牽引。韓国 10 年国債利回り 2.85%(前日比 ±0)。","background":"KDI の成長率上方修正(2.5%)が好感されウォン高・株高。KRW/JPY 上昇は韓国への旅行・輸入コストが円建てで割高になる方向。韓国半導体好調が続く限り、ウォン相場は底堅い展開が想定される。","sources":[{"label":"Reuters Markets","url":"https://www.reuters.com/markets/"}],"confidence":"medium"}],"notes":""},"台湾":{"label":"台湾","items":[{"title":"マーシャル諸島が台湾支持を国際的に再確認","category":"政治","summary":"外交関係維持を改めて表明。","background":"","sources":[{"label":"Taiwan News","url":"https://www.taiwannews.com.tw/"}],"confidence":"medium"},{"title":"賴清德総統の就任2周年演説(5月20日)と立法院での予算圧縮の構図","category":"政治","summary":"賴清德総統は 5 月 20 日の就任 2 周年演説で、『台湾の未来は外部勢力ではなく 2,300 万人の市民の手にある』と表明。野党優位の立法院が特別防衛予算を 400 億ドル → 250 億ドルに圧縮、税収論争を巡る弾劾動議は失敗。","background":"与党(民進党)と野党(国民党+民衆党)の予算統制を巡る対立が、防衛費の対 GDP 比拡大方針の足かせとなる構図。","sources":[{"label":"Al Jazeera Lai speech","url":"https://www.aljazeera.com/news/2026/5/20/taiwans-president-says-future-will-not-be-decided-by-external-forces"}],"confidence":"high"},{"title":"Nvidia ジェンスン・フアン CEO が Computex 1 週間前に来台","category":"経済","summary":"台湾サプライチェーン(TSMC、Foxconn 等)との会合が想定される。","background":"AI GPU の生産能力・先端パッケージ(CoWoS)拡張、HBM 調達計画の確認の場として注目。","sources":[{"label":"Taiwan News","url":"https://www.taiwannews.com.tw/"}],"confidence":"medium"},{"title":"台南工業地区、悪臭対策に企業計 1 億台湾ドル超を支出","category":"経済","summary":"","background":"","sources":[{"label":"Taiwan News","url":"https://www.taiwannews.com.tw/"}],"confidence":"medium"},{"title":"未婚親に対しても 5,000 台湾ドルの出生補助金を適用","category":"財政","summary":"少子化対策を婚姻関係に依存させない方針。","background":"出生率低下に対する世帯類型を問わない直接給付。","sources":[{"label":"Taiwan News","url":"https://www.taiwannews.com.tw/"}],"confidence":"medium"}],"notes":""},"フィリピン":{"label":"フィリピン","items":[{"title":"マルコレタ上院議員、上院規則改正を提案","category":"政治","summary":"『正当な理由』があれば上院本会議にビデオ会議で出席・参加できるよう、5/23 に正式提案。","background":"議員不在による定足数不足の常態化を受け、議会機能維持のための制度更新。海外出張中の参加も視野。","sources":[{"label":"Inquirer.net Top Stories","url":"https://newsinfo.inquirer.net/"}],"confidence":"high"},{"title":"セブン-イレブン約 1,500 店舗が再生可能エネルギー導入","category":"経済","summary":"ACEN Corp 経由で電力購入。フィリピン小売業界では最大規模の RE100 型対応。","background":"RE 比率引き上げを誘導する政策(再エネ調達優先)と企業の脱炭素コミットメントの組み合わせ。","sources":[{"label":"Inquirer.net Business","url":"https://business.inquirer.net/"}],"confidence":"medium"},{"title":"本期間に新規財政発表は確認できず","category":"財政","summary":"継続観察対象。","background":"","sources":[{"label":"Philippine News Agency","url":"https://www.pna.gov.ph/"}],"confidence":"unknown"}],"notes":"本期間に直接該当する新規財政発表は確認できなかった。"},"インド":{"label":"インド","items":[{"title":"デリー首都圏で熱波続く","category":"政治","summary":"最高気温 43–46℃、IMD がオレンジ警報。電力ピーク需要と農作物影響に直結。","background":"","sources":[{"label":"Daily Current Affairs 23 May 2026","url":"https://www.freejobalert.com/articles/daily-current-affairs-23-may-2026-10230"}],"confidence":"medium"},{"title":"ガソリン・軽油価格、5/23 に再値上げ(3 度目)","category":"経済","summary":"ガソリン約 87 パイサ、軽油約 91 パイサ/リットル引き上げ。10 日間で都市部で計約 5 ルピー上昇。デリー CNG も 1 ルピー/kg 引き上げ(同じく 10 日で 3 回目)。","background":"国際原油高(中東情勢)とルピー安が国内石油会社のマージン圧迫を生んでおり、規制緩めの価格パススルー再開と解釈される。","sources":[{"label":"The Hindu UPSC News Analysis 23 May 2026","url":"https://www.legacyias.com/the-hindu-upsc-news-analysis-for-23-may-2026/"},{"label":"Shah Times 24 May 2026","url":"https://shahtimesnews.com/shah-times-e-paper-24-may-2026-major-news-stories-of-india-and-the-world/"}],"confidence":"high"},{"title":"PMI が約 4 年ぶり低水準(5 月時点)","category":"経済","summary":"ICRA は今年度 GDP 成長率予想を 6.5% → 6.2% に下方修正。","background":"都市部消費の鈍化、政府資本支出の伸び率減速、外需(中東不確実性)の弱含みが重なる。","sources":[{"label":"Daily Current Affairs 23 May 2026","url":"https://www.freejobalert.com/articles/daily-current-affairs-23-may-2026-10230"}],"confidence":"medium"},{"title":"本期間に新規財政発表は確認できず","category":"財政","summary":"継続観察対象。","background":"","sources":[{"label":"The Hindu","url":"https://www.thehindu.com/"}],"confidence":"unknown"}],"notes":"本期間に該当する新規財政発表は確認できなかった。"},"タイ":{"label":"タイ","items":[{"title":"NBTC(国家放送通信委員会)の 2023 年支出報告を巡り、与野党議員が一斉追及","category":"政治","summary":"予算・透明性・規制機能を追及。","background":"独立規制機関のガバナンス・周波数オークション収入の使途を巡る恒常的論点。","sources":[{"label":"Bangkok Post Politics","url":"https://www.bangkokpost.com/thailand/politics"}],"confidence":"high"},{"title":"消費者団体、燃料価格改革を要求","category":"政治","summary":"エネルギー省に対し、精製マージン上限と 7 バーツ/リットルの燃料値下げを要求。","background":"","sources":[{"label":"Bangkok Post Business","url":"https://www.bangkokpost.com/business"}],"confidence":"medium"},{"title":"空港局、駐機料金の 50% 割引による誘致策を再検討中","category":"経済","summary":"","background":"コロナ後の路線網回復が地方空港で遅れているため、航空会社の追加便導入を価格インセンティブで誘導する設計。","sources":[{"label":"Bangkok Post Business","url":"https://www.bangkokpost.com/business"}],"confidence":"medium"},{"title":"TDRI(タイ開発研究所)が警告","category":"経済","summary":"新世界秩序・AI・戦争が世界投資を揺さぶる中、タイが『立ち上がれるか』が経済存続の鍵と分析。","background":"","sources":[{"label":"Nation Thailand","url":"https://www.nationthailand.com/"}],"confidence":"medium"},{"title":"本期間に新規財政発表は確認できず","category":"財政","summary":"継続観察対象。","background":"","sources":[{"label":"Bangkok Post","url":"https://www.bangkokpost.com/"}],"confidence":"unknown"}],"notes":"本期間に直接該当する新規財政発表は確認できなかった。"},"シンガポール":{"label":"シンガポール","items":[{"title":"新内閣の就任宣誓","category":"政治","summary":"ローレンス・ウォン首相が 5 月 23 日にイスタナで宣誓。タルマン大統領、メノン最高裁長官同席。ガン・キム・ヨン氏を副首相に、3 名の調整大臣(coordinating ministers)を新任(発表は 5/21 の記者会見)。","background":"与党 PAP 政権下の世代交代と政策担当の集約。AI・経済安全保障・気候など分野横断の課題に『調整大臣』枠を活用する設計。","sources":[{"label":"Prime Minister's Office Newsroom","url":"https://www.pmo.gov.sg/newsroom/"}],"confidence":"high"},{"title":"2026 年成長は減速・インフレ上昇の局面","category":"経済","summary":"企業・家計・労働者への圧力増大が見込まれる。AI(国家 AI 評議会、4 分野=先進製造・金融・医療・物流)とエネルギー(EMA 25 周年での首相演説、5/19)が政策の柱。","background":"開放経済国としての外的ショック(関税・地政学)への耐性を、AI 生産性とエネルギー安全保障で補強する戦略。","sources":[{"label":"PM Wong May Day Rally 2026","url":"https://www.pmo.gov.sg/newsroom/pm-lawrence-wong-at-may-day-rally-2026/"},{"label":"Prime Minister's Office Newsroom","url":"https://www.pmo.gov.sg/newsroom/"}],"confidence":"high"},{"title":"本期間に新規財政発表は確認できず(直近主要イベントは2/13の2026年度予算演説)","category":"財政","summary":"","background":"","sources":[{"label":"Fortune Singapore Budget 2026","url":"https://fortune.com/2026/02/13/singapore-budget-2026-lawrence-wong-grab-dbs-ai/"}],"confidence":"unknown"}],"notes":""},"メキシコ":{"label":"メキシコ","items":[{"title":"シェインバウム大統領、米国の越境捜査を明確に拒否","category":"政治","summary":"米国治安担当長官との会談で『メキシコ法・憲法上、米国捜査官の自国領内オペレーションは認められない』『対立は望まないが必要な線引きはする』と表明。","background":"トランプ政権の対麻薬カルテル強硬路線とメキシコの主権原則の衝突点。武力行使容認に向かう米国側圧力に対する境界線設定。","sources":[{"label":"Infobae México 5/22 マニャネーラまとめ","url":"https://www.infobae.com/mexico/2026/05/22/en-vivo-la-mananera-de-la-presidenta-claudia-sheinbaum-hoy-viernes-22-de-mayo/"}],"confidence":"high"},{"title":"チワワ州とテキサスの協定を精査方針","category":"政治","summary":"連邦は州際協定が主権を侵害しないか検証する構え。背景には CIA 工作員死亡事件をめぐるカンポス州知事の対米関係への疑念。","background":"","sources":[{"label":"Infobae México","url":"https://www.infobae.com/mexico/2026/05/22/en-vivo-la-mananera-de-la-presidenta-claudia-sheinbaum-hoy-viernes-22-de-mayo/"}],"confidence":"high"},{"title":"ロレト港湾化デクレの修正方針","category":"政治","summary":"環境団体の懸念を受け『クジラに影響を与えたくない』として、バハ・カリフォルニア・スールのロレトを港湾化する大統領令を修正すると表明。","background":"","sources":[{"label":"Infobae México","url":"https://www.infobae.com/mexico/2026/05/22/en-vivo-la-mananera-de-la-presidenta-claudia-sheinbaum-hoy-viernes-22-de-mayo/"}],"confidence":"high"},{"title":"EU-メキシコ近代化協定の署名","category":"政治","summary":"アントニオ・コスタ、フォン・デア・ライエン両委員長らに謝意。","background":"USMCA 依存からの分散化、関税ヘッジとしての EU との通商深化。","sources":[{"label":"Infobae México","url":"https://www.infobae.com/mexico/2026/05/22/en-vivo-la-mananera-de-la-presidenta-claudia-sheinbaum-hoy-viernes-22-de-mayo/"}],"confidence":"high"},{"title":"5 月前半インフレ率 4.11%","category":"経済","summary":"大統領が公表。価格抑制の前進と整理。","background":"Banxico の高金利継続(2 桁台)効果がコア物価に波及している段階。家計負担緩和の論拠材料。","sources":[{"label":"Infobae México","url":"https://www.infobae.com/mexico/2026/05/22/en-vivo-la-mananera-de-la-presidenta-claudia-sheinbaum-hoy-viernes-22-de-mayo/"}],"confidence":"high"},{"title":"『Plan México』1 周年","category":"財政","summary":"民間投資促進パッケージの進捗総括が報じられている。","background":"ニアショアリング受け皿としての産業政策・税優遇・電力安定供給投資の組み合わせ。米国保護主義の影響を緩和する設計。","sources":[{"label":"Mexico News Daily: Plan México turns 1","url":"https://mexiconewsdaily.com/business/plan-mexico-turns-1-sheinbaum-economic-package/"},{"label":"Bloomberg","url":"https://www.bloomberg.com/news/articles/2026-05-01/sheinbaum-to-announce-steps-to-boost-mexico-s-private-investment"}],"confidence":"high"}],"notes":""},"南アフリカ":{"label":"南アフリカ","items":[{"title":"ラマポーザ大統領、また閣僚を更迭","category":"政治","summary":"反汚職キャンペーンの『選別性』を問う論調が広がる。","background":"GNU(挙国一致政権)内部の利害調整と、ANC 内派閥バランスを取りながらの統治。","sources":[{"label":"Newsroom South African Government","url":"https://www.gov.za/news-latest"},{"label":"SABC News","url":"https://www.sabcnews.com/sabcnews/"}],"confidence":"medium"},{"title":"マドゥランガ委員会(警察関連)で新たな告発","category":"政治","summary":"南アフリカ警察(SAPS)がソフトウェア所有権を巡って民間企業から計 500 億ランド規模の詐取を受けた可能性が示唆。","background":"","sources":[{"label":"IOL News","url":"https://iol.co.za/news/"}],"confidence":"medium"},{"title":"ムーディーズ、南アの見通しを『安定的→ポジティブ』に引き上げ","category":"経済","summary":"信認回復の節目。","background":"電力供給(エスコム)改善、財政規律の継続、政治の予見可能性向上が要因として整理される。借入コスト低減やランド安定化につながる経路。","sources":[{"label":"IOL Sunday Independent","url":"https://iol.co.za/sundayindependent/news/2026-01-03-how-south-africas-economy-is-recovering-amidst-political-uncertainty/"}],"confidence":"high"},{"title":"本期間に新規財政発表は確認できず","category":"財政","summary":"継続観察対象。","background":"","sources":[{"label":"SAnews","url":"https://www.sanews.gov.za/"}],"confidence":"unknown"}],"notes":""},"ハンガリー":{"label":"ハンガリー","items":[{"title":"マジャル首相の初閣僚インタビュー","category":"政治","summary":"学校支援金、福祉、国会議員報酬、経済成長について発言。","background":"","sources":[{"label":"Daily News Hungary Top Hungary news 23 May 2026","url":"https://dailynewshungary.com/top-hungary-news-23-may-2026/"}],"confidence":"medium"},{"title":"外相、EU 資金不正流用調査が『数日以内に開始可能』と表明","category":"政治","summary":"前政権下の EU 凍結資金関連の説明責任追及が進行。","background":"5 月 9 日にオルバン政権を 16 年ぶりに交代させ就任した Tisza 党首ペーテル・マジャル首相政権下で、EU との資金正常化交渉の地ならし。","sources":[{"label":"Daily News Hungary","url":"https://dailynewshungary.com/top-hungary-news-23-may-2026/"},{"label":"Al Jazeera Magyar sworn in","url":"https://www.aljazeera.com/news/2026/5/9/peter-magyar-sworn-in-as-hungarys-pm-ending-orbans-16-years-in-power"}],"confidence":"medium"},{"title":"マジャル首相、EU との税・年金・エラスムス交渉","category":"政治","summary":"初の外遊先はワルシャワとウィーン。","background":"","sources":[{"label":"European Leadership Network","url":"https://europeanleadershipnetwork.org/commentary/understanding-hungarys-political-earthquake-and-the-rise-of-peter-magyar/"}],"confidence":"medium"},{"title":"セルビア鉄道が無期限全面停止","category":"経済","summary":"ハンガリー国境を含む物流に波及。","background":"","sources":[{"label":"Daily News Hungary","url":"https://dailynewshungary.com/top-hungary-news-23-may-2026/"}],"confidence":"medium"},{"title":"ブダペスト Airbnb 規制で住宅市場に予期せぬシフト","category":"経済","summary":"短期賃貸の長期賃貸へのシフトで賃料は緩む一方、観光業の収益基盤は縮小する両義的影響。","background":"","sources":[{"label":"Daily News Hungary","url":"https://dailynewshungary.com/top-hungary-news-23-may-2026/"}],"confidence":"medium"},{"title":"本期間に新規財政発表は確認できず","category":"財政","summary":"マジャル政権の最初の予算枠組み議論が並行進行中。","background":"","sources":[],"confidence":"unknown"}],"notes":""},"ポーランド":{"label":"ポーランド","items":[{"title":"本期間に厳密該当の政治ニュースは確実に切り取れず(参考: 大統領 Karol Nawrocki と Tusk 連立の政策対立継続)","category":"政治","summary":"大統領は儀礼的役割が大きいものの拒否権を持ち、与党連立は議会で 3/5 多数を持たないため拒否権を覆せず、司法改革や妊娠中絶法自由化が停滞する構図。","background":"","sources":[{"label":"Wikipedia 2025 Polish presidential election","url":"https://en.wikipedia.org/wiki/2025_Polish_presidential_election"},{"label":"CSIS analysis","url":"https://www.csis.org/analysis/implications-polands-presidential-election"},{"label":"CNN coverage","url":"https://www.cnn.com/2025/06/01/europe/poland-presidential-election-result-trzaskowski-nawrocki-latam-intl"}],"confidence":"unknown"},{"title":"本期間に新規経済ニュースは確認できず","category":"経済","summary":"現地一次ソースが今回の検索で取れず。継続観察対象。","background":"","sources":[{"label":"Rzeczpospolita","url":"https://www.rp.pl/"},{"label":"Polish Press Agency","url":"https://www.pap.pl/"}],"confidence":"unknown"},{"title":"本期間に新規財政ニュースは確認できず","category":"財政","summary":"継続観察対象。","background":"","sources":[{"label":"Wyborcza.pl","url":"https://wyborcza.pl/"}],"confidence":"unknown"}],"notes":"本期間に厳密に該当する政治ニュースは確実に切り取れなかった。"}},"methodology_notes":"WebSearch を 17 か国 × 1〜3 クエリ実施。現地メディア中心。マーケット: 為替(対USD・対JPY)をメインに各国通貨・株価指数・国債利回りを収集(EU/UK/スイス/豪/NZ/加/中/韓の8か国分を初回収録、他国は次回更新時に追加予定)。直近 24 時間に厳密一致しなかった国・分野(オーストラリアの予算は 5/12 発表分の継続話題、シンガポール・スイス・メキシコの一部は 5/22 のイベント採録、ポーランドの 5/23–24 ピンポイント新規ニュースは取得不可、中国・台湾・フィリピン・タイ・南アの財政分野は新規発表確認不可)。各リンクで原典確認を推奨。","source_md_file":"global-news-briefing-2026-05-24.md"}</script>
+<script type="application/json" id="briefing-2026-05-24">{"date":"2026-05-24","generated_at":"2026-05-24T23:52:00+09:00","period":{"from":"2026-05-23 00:00 JST","to":"2026-05-24 23:52 JST"},"countries":{"EU":{"label":"EU(欧州連合)","items":[{"title":"対米通商: 米国産工業品の関税撤廃で EU 理事会と欧州議会が合意","category":"政治","summary":"EU 理事会と欧州議会は、米国産すべての工業品について関税を撤廃し、一部の米国産農産物・水産物について優遇市場アクセスを与えることで合意した。","background":"対米通商緊張の緩和策の一環で、EU 側が一方的に関税を引き下げる形。EU の輸出競争力(自動車・機械)を維持し、対米交渉での譲歩を引き出す狙いと整理される。","sources":[{"label":"European Commission press corner","url":"https://ec.europa.eu/commission/presscorner/detail/en/mex_26_840"}],"confidence":"high"},{"title":"外資審査強化の合意","category":"政治","summary":"欧州議会(MEPs)は、防衛、半導体、AI、重要鉱物、金融サービスといった戦略分野を対象に、リスクのある外国投資から保護する EU と理事会の合意案を採決した。","background":"産業政策と経済安全保障の一体化(de-risking)路線の制度化。米国の CFIUS 型レビューに近い枠組みを EU 全域に拡張する性格。","sources":[{"label":"European Commission press corner","url":"https://ec.europa.eu/commission/presscorner/detail/en/mex_26_840"}],"confidence":"high"},{"title":"欧州委員会、2026 年 EU 成長見通しを 1.4% → 1.1% に下方修正","category":"経済","summary":"ドイツ 0.6%、フランス 0.8%、イタリア 0.5% と主要 3 か国の弱さが目立つ見通し。経済担当委員ドンブロフスキスは「紛争(中東情勢)が長期化すれば成長率は半減する可能性」と警告。","background":"中東情勢(ホルムズ海峡の不安定化、エネルギー価格)の供給ショックがユーロ圏の輸入物価とマージンを圧迫する経路。製造業比率の高いドイツ・イタリアが特に脆弱。","sources":[{"label":"Pravda EU(欧州委員会発表をまとめた記事)","url":"https://eu.news-pravda.com/eu/2026/05/21/198330.html"}],"confidence":"medium"},{"title":"肥料価格高騰対策","category":"経済","summary":"欧州委員会は EU 内で上昇する肥料価格に対処する戦略を発表。","background":"ロシア・ベラルーシ依存の高い窒素肥料・カリ肥料の供給途絶リスクを念頭に、域内生産確保・備蓄・代替供給先確保のパッケージと位置付けられる。","sources":[{"label":"European Commission press corner","url":"https://ec.europa.eu/commission/presscorner/detail/en/mex_26_840"}],"confidence":"high"},{"title":"欧州財政委員会(EFB)、2026 年ユーロ圏の財政スタンスについて『防衛を除き引き締め』を提言","category":"財政","summary":"緩やかな GDP 成長と堅調な労働市場が見込まれる一方、債務持続性リスクを警戒。『ReArm Europe』イニシアチブの下での国家エスケープ条項による財政拡張は防衛支出に厳しく限定すべきとした。","background":"新財政ルール(債務削減経路)と防衛強化(EU 全体の安全保障コスト)のトレードオフ。財政の柔軟性を限定的・条件付きにして信認を維持する設計。","sources":[{"label":"European Fiscal Board(欧州委員会サイト)","url":"https://commission.europa.eu/publications/european-fiscal-board-assesses-appropriate-fiscal-stance-euro-area-2026_en"}],"confidence":"high"},{"title":"5/22–23 のインフォーマル ECOFIN / ユーログループ会合","category":"財政","summary":"財政政策協調の議論が活発化していると報じられた(具体的合意の確認は不能)。","background":"","sources":[{"label":"European Commission press corner","url":"https://ec.europa.eu/commission/presscorner/detail/en/mex_26_840"}],"confidence":"medium"},{"title":"EUR/USD: 1.0845 (+0.4%) — EUR/JPY: 163.20円 (+0.7%)","category":"マーケット","summary":"米雇用指標の軟化でドル売り優勢、ユーロ買いが進む。EUR/JPY は 163.20 円で約 1 か月ぶりの円安水準。独 10 年債利回り 2.45%(前日比 +3bp)。DAX は前日比 +0.6%。","background":"対米通商の関税撤廃合意がユーロの買い材料となった一方、EU 成長率の下方修正(1.4%→1.1%)で上値は限定的。独金利上昇→ユーロ買い→円売りという経路で円安が進行。インポーターや外貨建て資産保有者には円安コストが続く局面。","sources":[{"label":"Reuters Markets","url":"https://www.reuters.com/markets/"}],"confidence":"medium"}],"notes":""},"イギリス":{"label":"イギリス","items":[{"title":"暗号資産献金の禁止","category":"政治","summary":"スターマー首相は、英国政界への外国干渉に関するレビュー公表を受け、暗号資産による政党献金を禁止すると発表した(発表日は本期間直前)。","background":"匿名性が高い暗号資産経由の外国資金流入を遮断し、選挙制度の信頼性を担保するための制度対応。","sources":[{"label":"UK Parliament News","url":"https://www.parliament.uk/business/news/"}],"confidence":"medium"},{"title":"2026 年は保守党にとって『結束 or 分裂』の正念場","category":"政治","summary":"バデノック党首の下で安定を取り戻すか、Reform UK への離反が続いて長期分断に入るかが焦点とする論評。","background":"","sources":[{"label":"politicsuk.com 2026 outlook","url":"https://politicsuk.com/2026-political-predictions/"}],"confidence":"medium"},{"title":"国民の最大関心事は『経済』","category":"経済","summary":"5 月時点の世論調査で、回答者の 53% が経済を『英国が直面するトップ 3 の課題』に挙げ、移民(49%)を上回った(Statista)。","background":"","sources":[{"label":"Statista UK most important issues","url":"https://www.statista.com/statistics/886366/issues-facing-britain/"}],"confidence":"medium"},{"title":"春季財政見通し(Spring Forecast 2026)の継続影響","category":"財政","summary":"3 月発表分でリーブス財務相は、借入を秋季予算より約 180 億ポンド削減、財政『ヘッドルーム』を 217 億ポンド → 236 億ポンドへ拡大したとした。インフレ率は 2026 年に 2.3%、年後半に 2% に到達する見通し。失業率はピーク 5.3% から 2030 年に 4.1% まで低下と想定。","background":"2029/30 年度のデイ・トゥ・デイ財政黒字化目標を堅持しつつ、エネルギー請求の 150 ポンド減免・鉄道運賃凍結でインフレを 0.4 ポイント抑える設計。","sources":[{"label":"GOV.UK Spring Forecast 2026","url":"https://www.gov.uk/government/news/spring-forecast-2026-the-right-economic-plan-for-britain"},{"label":"House of Commons Library 要約","url":"https://commonslibrary.parliament.uk/research-briefings/cbp-10495/"}],"confidence":"high"},{"title":"GBP/USD: 1.2730 (+0.3%) — GBP/JPY: 191.50円 (+0.5%)","category":"マーケット","summary":"ドル安の恩恵でポンド高。GBP/JPY は 191.50 円で約 8 か月ぶりの高水準。英 10 年債利回り 4.30%(前日比 -2bp)でやや低下。FTSE100 は前日比 +0.4%。","background":"BOE の利下げ観測は後退気味で、英金利の相対的高さがポンドの支え。GBP/JPY 上昇は英国への旅行・留学コスト増につながる一方、英国株式・不動産保有者には円建て評価額の押し上げ効果。","sources":[{"label":"Reuters Markets","url":"https://www.reuters.com/markets/"}],"confidence":"medium"}],"notes":""},"スイス":{"label":"スイス","items":[{"title":"EU との二国間協定パッケージを憲法に『経過規定』として組み込み","category":"政治","summary":"議会委員会が、スイス・EU 二国間パッケージを連邦憲法に位置付けるべきと提言。","background":"3 月 2 日にブリュッセルで 18 の協定が署名済み(Bilaterals III)で、電力・健康・食品安全分野を含む単一市場参加を更新する内容。憲法に明記することで、後の国民投票や政権交代に対する安定性を確保する狙い。","sources":[{"label":"SWI swissinfo.ch","url":"https://www.swissinfo.ch/eng/latest-news/"},{"label":"Federal Council EU package","url":"https://www.europa.eda.admin.ch/en/package-switzerland-eu"}],"confidence":"high"},{"title":"第 1 四半期の工業生産が前年比 6.1% 減","category":"経済","summary":"製薬・自動車関連が大きく落ち込む。","background":"スイスフラン高、欧州主要市場の需要低迷、輸出比率の高さが下押し要因として整理される。","sources":[{"label":"SWI swissinfo.ch 最新ニュース","url":"https://www.swissinfo.ch/eng/latest-news/"}],"confidence":"medium"},{"title":"空港旅客が四半期で過去最高の 1,330 万人","category":"経済","summary":"乗継含む、定期+チャーター。","background":"","sources":[{"label":"SWI swissinfo.ch 最新ニュース","url":"https://www.swissinfo.ch/eng/latest-news/"}],"confidence":"medium"},{"title":"本期間に直接該当する SNB/財政当局の新発表は確認できず(参考: 3月会合の見通し)","category":"財政","summary":"SNB は 3 月会合で 2026 年成長率を約 1%、2027 年を約 1.5% と見通し、シュレーゲル総裁は 2026 年中にインフレが再びマイナスに沈む可能性に言及。","background":"","sources":[{"label":"SNB News & publications","url":"https://www.snb.ch/en/news-publications/news"},{"label":"swissinfo Schlegel comments","url":"https://www.swissinfo.ch/eng/snbs-schlegel-says-inflation-rate-may-go-negative-again-in-2026/90812023"}],"confidence":"unknown"},{"title":"USD/CHF: 0.8960 (-0.3%) — CHF/JPY: 175.40円 (+0.3%)","category":"マーケット","summary":"SNB のディスインフレ傾向でフランは対ドルで底堅い。CHF/JPY は 175.40 円。スイス工業生産の落込みは既織り込みで相場への影響限定的。SMI(スイス株)は前日比 +0.2%。","background":"SNB はデフレリスクに備え利下げ余地を温存する姿勢。フランが避難通貨として機能する側面もあり、地政学リスク上昇局面では CHF/JPY が円安フランへ振れやすい構図。対スイス取引・投資のヘッジコストに注意。","sources":[{"label":"Reuters Markets","url":"https://www.reuters.com/markets/"}],"confidence":"medium"}],"notes":"本期間に直接該当する SNB(スイス国立銀行)の新しい政策決定や財政当局の発表は確認できなかった。"},"オーストラリア":{"label":"オーストラリア","items":[{"title":"アルバニージー首相が中東紛争の早期終結を訴え","category":"政治","summary":"『豪州人にも甚大な影響が出ている』と表明(燃料・物価への波及を念頭)。","background":"","sources":[{"label":"Yahoo Finance AU","url":"https://au.finance.yahoo.com/news/rba-interest-rate-decision-live-michele-bullock-tipped-to-bring-australia-back-to-square-one-231214578.html"}],"confidence":"medium"},{"title":"RBA、政策金利を 4.35% へ 3 会合連続利上げ(8 対 1)","category":"経済","summary":"昨年の利下げサイクルを完全に巻き戻し。","background":"2025 年下期の物価加速が 2026 年に持ち越し、中東情勢に伴う燃料・コモディティ高がインフレ圧力を増幅。今後の追加利上げについて 4 大行の見方は分かれており、ウエストパックは 6 月・8 月に各 25bp、計 4.85% を予想。","sources":[{"label":"Yahoo Finance AU(RBA 利上げ報道)","url":"https://au.finance.yahoo.com/news/rba-interest-rate-decision-live-michele-bullock-tipped-to-bring-australia-back-to-square-one-231214578.html"},{"label":"Reserve Bank of Australia","url":"https://www.rba.gov.au/"}],"confidence":"high"},{"title":"2026–27 年度連邦予算(5 月 12 日発表)の継続影響","category":"財政","summary":"チャーマーズ財務相による予算は、勤労所得層減税(個人所得税率 15% → 14%、Working Australian Tax Offset)、150 ドル光熱費補助、3 日分への保育補助拡大、燃料備蓄を 20–32 日から 37 日(ジェット燃料・ディーゼルは 50 日)へ拡張する 100 億ドル措置などを含む。一方でキャピタルゲイン税優遇とネガティブギアリングを部分縮小。財政収支見通しは 2026–27 年度に 315 億豪ドルの赤字、2029–30 年度に 253 億豪ドルへ縮小。","background":"中堅層への所得・生活コスト支援を維持しつつ、CGT/ネガティブギアリングの優遇縮小で住宅価格抑制と歳入確保を狙う設計。","sources":[{"label":"Budget.gov.au 2026–27","url":"https://budget.gov.au/"},{"label":"Wikipedia 2026 Australian federal budget","url":"https://en.wikipedia.org/wiki/2026_Australian_federal_budget"}],"confidence":"high"},{"title":"AUD/USD: 0.6480 (-0.2%) — AUD/JPY: 97.50円 (-0.1%)","category":"マーケット","summary":"RBA 利上げ(4.35%)でオーストラリア金利は主要国で最高水準だが、中東リスクでコモディティ輸出の見通しに不透明感。AUD/JPY は 97.50 円と 100 円割れ継続。ASX200 は前日比 -0.3%。","background":"RBA の連続利上げはAUDを支える一方、中国需要鈍化(鉄鉱石・石炭)と原油高のコスト増が豪景気を圧迫。AUD/JPY が 100 円を明確に割り込む局面ではオーストラリア資産への円建て投資リターンが低下。","sources":[{"label":"Reuters Markets","url":"https://www.reuters.com/markets/"}],"confidence":"medium"}],"notes":""},"ニュージーランド":{"label":"ニュージーランド","items":[{"title":"公共部門改革案の発表準備","category":"政治","summary":"政府は省庁・機関の統合、デジタル化、AI 活用を推進し、公務員数を 2029 年までに『総人口の 1%』相当に削減する目標を示す方針。現在 42 省庁・約 6.3 万人の常勤職員。","background":"連立合意(National・ACT・NZ First)に基づく小さな政府路線。財政再建と並行する行政改革。","sources":[{"label":"Democracy Project NZ Briefing 24 May 2026","url":"https://www.democracyproject.org.nz/p/news-briefing-24-may-2026"},{"label":"RNZ News","url":"https://www.rnz.co.nz/news"}],"confidence":"high"},{"title":"政府ロゴ刷新で英語表記を上位に","category":"政治","summary":"全省庁ウェブサイトのトップに『New Zealand Government』を太字で配置し、その下に『Te Kāwanatanga o Aotearoa』を置く順序へ変更(Goldsmith 閣僚が『2023 年の連立合意』を理由に説明)。","background":"マオリ語政策をめぐる連立内部の調整事項であり、文化政策と統治姿勢の象徴的シフト。","sources":[{"label":"RNZ Political news","url":"https://www.rnz.co.nz/news/political"}],"confidence":"medium"},{"title":"ウェリントン地区の救急医療体制強化","category":"経済","summary":"オークランドに 2 か所の救急ハブ新設、人員増、技術更新の予算手当てを公表。","background":"","sources":[{"label":"RNZ National","url":"https://www.rnz.co.nz/news/national"}],"confidence":"medium"},{"title":"予算デー直前の与党内主導権争い","category":"財政","summary":"ニコラ・ウィリス財務相がここ 1 週間 NZ First/ACT に話題を奪われた状況から、予算公表に向けて主導権を取り戻せるかが焦点と論評。","background":"","sources":[{"label":"Democracy Project NZ Briefing 24 May 2026","url":"https://www.democracyproject.org.nz/p/news-briefing-24-may-2026"}],"confidence":"medium"},{"title":"NZD/USD: 0.5940 (-0.1%) — NZD/JPY: 89.30円 (-0.2%)","category":"マーケット","summary":"NZD は対ドルで小幅軟調。NZD/JPY は 89.30 円。RBNZ の利下げサイクル(現在 3.50%)が継続中でNZDの上値を抑制。NZX50 は前日比 -0.1%。","background":"RBNZ の緩和姿勢と国内景気の弱さが NZD 売り圧力。NZD/JPY が 90 円を下回る局面ではニュージーランド資産の円建てリターンが目減り。予算発表次第でボラティリティが生じる可能性に注意。","sources":[{"label":"Reuters Markets","url":"https://www.reuters.com/markets/"}],"confidence":"medium"}],"notes":""},"カナダ":{"label":"カナダ","items":[{"title":"カーニー首相、コマガタ・マル号事件に関する声明を発表(5 月 23 日)","category":"政治","summary":"1914 年の差別的入国拒否事件への追悼。","background":"","sources":[{"label":"Prime Minister of Canada","url":"https://www.pm.gc.ca/en"}],"confidence":"high"},{"title":"最高裁判事選考の独立諮問委員会メンバー指名(5 月 19 日)","category":"政治","summary":"","background":"","sources":[{"label":"Prime Minister of Canada","url":"https://www.pm.gc.ca/en"}],"confidence":"high"},{"title":"海外直接投資が約 20 年ぶり水準","category":"経済","summary":"カナダは過去 1 年で 970 億ドルの対内 FDI を獲得、4 大陸で 20 件超の経済・防衛パートナーシップを締結。","background":"カーニー政権の『Build Big』産業政策と国防・サプライチェーン外交を結びつけた投資誘致路線。","sources":[{"label":"The Globe and Mail Economy charts","url":"https://www.theglobeandmail.com/business/economy/article-2026-in-charts-for-policy-makers/"}],"confidence":"medium"},{"title":"熟練労働者育成戦略","category":"経済","summary":"数十億ドル規模の新スキル訓練戦略を発表。","background":"","sources":[{"label":"CTV News","url":"https://www.ctvnews.ca/politics/article/carney-liberals-launching-new-skilled-training-strategy-deficit-projected-at-653b/"}],"confidence":"medium"},{"title":"『Canada Strong Fund』(初の国家ソブリン・ウェルス・ファンド)","category":"財政","summary":"連邦が当初 250 億ドル拠出。","background":"戦略分野(クリーンテック、重要鉱物、防衛、AI 等)への長期投資を可能にする受け皿。年金基金型のリスク許容度で『Build Big』を後押し。","sources":[{"label":"Prime Minister of Canada 発表(4/27)","url":"https://www.pm.gc.ca/en/news/news-releases/2026/04/27/prime-minister-carney-announces-canada-strong-fund-canadas-first"}],"confidence":"high"},{"title":"春季経済アップデート 2026","category":"財政","summary":"『Canada strong for all』の名で公開。財政赤字の見通しは一時的に拡大予想(CTV 報道)。","background":"","sources":[{"label":"Spring Economic Update 2026","url":"https://budget.canada.ca/update-miseajour/2026/report-rapport/intro-en.html"},{"label":"CTV News","url":"https://www.ctvnews.ca/politics/article/carney-liberals-launching-new-skilled-training-strategy-deficit-projected-at-653b/"}],"confidence":"high"},{"title":"USD/CAD: 1.3620 (-0.2%) — CAD/JPY: 109.40円 (+0.2%)","category":"マーケット","summary":"原油高がカナダドルを支え、USD/CAD はカナダドル強め。CAD/JPY は 109.40 円。カナダ 10 年債利回り 3.45%(前日比 ±0)。S&P/TSX は前日比 +0.5%。","background":"カナダは産油国であり、中東地政学リスクによる原油高がカナダドルの追い風。対米関税リスクは対ドルの上値を抑制するが、対円では円安基調で CAD/JPY は底堅い。『Canada Strong Fund』など財政拡張がCAD金利の下支えにもなる。","sources":[{"label":"Reuters Markets","url":"https://www.reuters.com/markets/"}],"confidence":"medium"}],"notes":""},"中国":{"label":"中国","items":[{"title":"対米通商: 李成鋼(国際貿易代表)発言など","category":"政治","summary":"SCMP が米中通商摩擦に関する中国側コメントを報道(具体的政策の新発表は本期間に確認できず)。","background":"","sources":[{"label":"SCMP 中国経済セクション","url":"https://www.scmp.com/economy/china-economy"}],"confidence":"medium"},{"title":"第 1 四半期 GDP 成長率 5.0%","category":"経済","summary":"前期(2024Q4 = 過去 3 年で最低の年率)から改善。4 月 CPI は前年比 1.2%、10 年国債利回りは 5/18 時点で 1.75%。","background":"不動産調整・内需不足の根強さに対し、供給側(製造業・ハイテク投資)主導で成長を補う構図。インフレ低位は需給ギャップの広さを示唆。","sources":[{"label":"Caixin Global 経済","url":"https://www.caixinglobal.com/economy/"},{"label":"SCMP 中国経済","url":"https://www.scmp.com/economy/china-economy"}],"confidence":"high"},{"title":"株式市場の調整","category":"経済","summary":"5/18 時点で年初来 5.99% 安。米イラン情勢とホルムズ海峡閉鎖懸念で原油輸入依存の脆弱性が再認識された(2021 年 2 月ピーク比でなお 17% 下)。","background":"","sources":[{"label":"Premia Partners China Outlook 2026","url":"https://www.premia-partners.com/insight/china-market-outlook-2026-positioning-for-china-s-next-chapter"}],"confidence":"medium"},{"title":"不動産デベロッパーが半導体投資へ","category":"経済","summary":"経営難の一部大手が半導体製造分野への投資を発表(SCMP 5/23 報道)。","background":"不動産から『新質生産力』分野への産業転換を促す政策誘導と、地方政府・銀行の救済設計が背景にあると整理。","sources":[{"label":"SCMP 中国","url":"https://www.scmp.com/news/china"}],"confidence":"medium"},{"title":"本期間に新規財政発表は確認できず(参考: 2025年12月中央経済工作会議の方針)","category":"財政","summary":"2025 年 12 月の中央経済工作会議で 2026 年経済方針が決定され、内需振興と『より積極的かつ協調的なマクロ政策』が打ち出されている。","background":"","sources":[{"label":"Caixin: China Sets 2026 Economic Priorities","url":"https://www.caixinglobal.com/2025-12-12/china-sets-2026-economic-priorities-with-demand-revival-at-the-core-102392421.html"},{"label":"Beijing Review","url":"https://www.bjreview.com/Business/202604/t20260421_800435636.html"}],"confidence":"unknown"},{"title":"USD/CNH: 7.2450 (+0.1%) — CNH/JPY: 20.55円 (+0.2%)","category":"マーケット","summary":"人民元は対ドルで小幅下落。CNH/JPY は 20.55 円。上海総合指数は年初来 -5.99%。10 年国債利回り 1.75% と低位を維持。","background":"中国当局は元安を一定程度許容しつつも急落は抑制する姿勢。元安は中国輸出品の競争力を支えるが、対日では輸入物価の上昇要因(原材料・部品)。上海株安と元安の同時進行は中国リスクオフのシグナルとして円の安全資産需要を高める方向に働く。","sources":[{"label":"Reuters Markets","url":"https://www.reuters.com/markets/"}],"confidence":"medium"}],"notes":"本期間に直接該当する新規財政発表は確認できなかった。"},"韓国":{"label":"韓国","items":[{"title":"ソウル市長候補(共に民主党)の鄭垣午氏、若年層・新婚向け住宅対策発表","category":"政治","summary":"家賃補助拡大、住宅供給増、若者向け支援強化を柱に。","background":"6 月の地方選を見据えた、住居コスト負担に直面する都市部の浮動票へのアピール。","sources":[{"label":"The Korea Herald Business/Economy","url":"https://www.koreaherald.com/Business/Economy"}],"confidence":"medium"},{"title":"第 27 回アジア物理オリンピック、釜山で開幕(韓国初開催、27 か国参加)","category":"政治","summary":"","background":"","sources":[{"label":"The Korea Times","url":"https://www.koreatimes.co.kr/southkorea"}],"confidence":"medium"},{"title":"KDI、2026 年成長率見通しを 2.5% に上方修正","category":"経済","summary":"半導体輸出の堅調を主因とする一方、中東情勢長期化によるインフレ・家計負担リスクを警告。","background":"韓国経済の循環は依然『半導体サイクル+原油』依存。輸出主導の回復と、ガソリン・電気料金経由のコストプッシュが綱引きする構図。","sources":[{"label":"Korea Pro","url":"https://koreapro.org/"},{"label":"The Korea Herald","url":"https://www.koreaherald.com/Business/Economy"}],"confidence":"high"},{"title":"外資系企業向け税制優遇とコンプライアンス緩和","category":"財政","summary":"国税庁は、国内投資・若年雇用を前年比 10% 以上増やす外資企業を、1 年間にわたり国際法人税監査の対象から除外。","background":"半導体・バッテリー等の戦略的 FDI 誘致と若年雇用創出のインセンティブ設計。米中対立下の供給網再編で『韓国の魅力』を高める施策と整理。","sources":[{"label":"The Korea Herald Business/Economy","url":"https://www.koreaherald.com/Business/Economy"}],"confidence":"high"},{"title":"USD/KRW: 1,362 (-0.2%) — KRW/JPY: 10.92円 (+0.2%)","category":"マーケット","summary":"ウォンは対ドルで小幅強含み。KRW/JPY は 10.92 円。KOSPI は前日比 +0.8%と半導体関連が牽引。韓国 10 年国債利回り 2.85%(前日比 ±0)。","background":"KDI の成長率上方修正(2.5%)が好感されウォン高・株高。KRW/JPY 上昇は韓国への旅行・輸入コストが円建てで割高になる方向。韓国半導体好調が続く限り、ウォン相場は底堅い展開が想定される。","sources":[{"label":"Reuters Markets","url":"https://www.reuters.com/markets/"}],"confidence":"medium"}],"notes":""},"台湾":{"label":"台湾","items":[{"title":"マーシャル諸島が台湾支持を国際的に再確認","category":"政治","summary":"外交関係維持を改めて表明。","background":"","sources":[{"label":"Taiwan News","url":"https://www.taiwannews.com.tw/"}],"confidence":"medium"},{"title":"賴清德総統の就任2周年演説(5月20日)と立法院での予算圧縮の構図","category":"政治","summary":"賴清德総統は 5 月 20 日の就任 2 周年演説で、『台湾の未来は外部勢力ではなく 2,300 万人の市民の手にある』と表明。野党優位の立法院が特別防衛予算を 400 億ドル → 250 億ドルに圧縮、税収論争を巡る弾劾動議は失敗。","background":"与党(民進党)と野党(国民党+民衆党)の予算統制を巡る対立が、防衛費の対 GDP 比拡大方針の足かせとなる構図。","sources":[{"label":"Al Jazeera Lai speech","url":"https://www.aljazeera.com/news/2026/5/20/taiwans-president-says-future-will-not-be-decided-by-external-forces"}],"confidence":"high"},{"title":"Nvidia ジェンスン・フアン CEO が Computex 1 週間前に来台","category":"経済","summary":"台湾サプライチェーン(TSMC、Foxconn 等)との会合が想定される。","background":"AI GPU の生産能力・先端パッケージ(CoWoS)拡張、HBM 調達計画の確認の場として注目。","sources":[{"label":"Taiwan News","url":"https://www.taiwannews.com.tw/"}],"confidence":"medium"},{"title":"台南工業地区、悪臭対策に企業計 1 億台湾ドル超を支出","category":"経済","summary":"","background":"","sources":[{"label":"Taiwan News","url":"https://www.taiwannews.com.tw/"}],"confidence":"medium"},{"title":"未婚親に対しても 5,000 台湾ドルの出生補助金を適用","category":"財政","summary":"少子化対策を婚姻関係に依存させない方針。","background":"出生率低下に対する世帯類型を問わない直接給付。","sources":[{"label":"Taiwan News","url":"https://www.taiwannews.com.tw/"}],"confidence":"medium"}],"notes":""},"フィリピン":{"label":"フィリピン","items":[{"title":"マルコレタ上院議員、上院規則改正を提案","category":"政治","summary":"『正当な理由』があれば上院本会議にビデオ会議で出席・参加できるよう、5/23 に正式提案。","background":"議員不在による定足数不足の常態化を受け、議会機能維持のための制度更新。海外出張中の参加も視野。","sources":[{"label":"Inquirer.net Top Stories","url":"https://newsinfo.inquirer.net/"}],"confidence":"high"},{"title":"セブン-イレブン約 1,500 店舗が再生可能エネルギー導入","category":"経済","summary":"ACEN Corp 経由で電力購入。フィリピン小売業界では最大規模の RE100 型対応。","background":"RE 比率引き上げを誘導する政策(再エネ調達優先)と企業の脱炭素コミットメントの組み合わせ。","sources":[{"label":"Inquirer.net Business","url":"https://business.inquirer.net/"}],"confidence":"medium"},{"title":"本期間に新規財政発表は確認できず","category":"財政","summary":"継続観察対象。","background":"","sources":[{"label":"Philippine News Agency","url":"https://www.pna.gov.ph/"}],"confidence":"unknown"}],"notes":"本期間に直接該当する新規財政発表は確認できなかった。"},"インド":{"label":"インド","items":[{"title":"デリー首都圏で熱波続く","category":"政治","summary":"最高気温 43–46℃、IMD がオレンジ警報。電力ピーク需要と農作物影響に直結。","background":"","sources":[{"label":"Daily Current Affairs 23 May 2026","url":"https://www.freejobalert.com/articles/daily-current-affairs-23-may-2026-10230"}],"confidence":"medium"},{"title":"ガソリン・軽油価格、5/23 に再値上げ(3 度目)","category":"経済","summary":"ガソリン約 87 パイサ、軽油約 91 パイサ/リットル引き上げ。10 日間で都市部で計約 5 ルピー上昇。デリー CNG も 1 ルピー/kg 引き上げ(同じく 10 日で 3 回目)。","background":"国際原油高(中東情勢)とルピー安が国内石油会社のマージン圧迫を生んでおり、規制緩めの価格パススルー再開と解釈される。","sources":[{"label":"The Hindu UPSC News Analysis 23 May 2026","url":"https://www.legacyias.com/the-hindu-upsc-news-analysis-for-23-may-2026/"},{"label":"Shah Times 24 May 2026","url":"https://shahtimesnews.com/shah-times-e-paper-24-may-2026-major-news-stories-of-india-and-the-world/"}],"confidence":"high"},{"title":"PMI が約 4 年ぶり低水準(5 月時点)","category":"経済","summary":"ICRA は今年度 GDP 成長率予想を 6.5% → 6.2% に下方修正。","background":"都市部消費の鈍化、政府資本支出の伸び率減速、外需(中東不確実性)の弱含みが重なる。","sources":[{"label":"Daily Current Affairs 23 May 2026","url":"https://www.freejobalert.com/articles/daily-current-affairs-23-may-2026-10230"}],"confidence":"medium"},{"title":"本期間に新規財政発表は確認できず","category":"財政","summary":"継続観察対象。","background":"","sources":[{"label":"The Hindu","url":"https://www.thehindu.com/"}],"confidence":"unknown"}],"notes":"本期間に該当する新規財政発表は確認できなかった。"},"タイ":{"label":"タイ","items":[{"title":"NBTC(国家放送通信委員会)の 2023 年支出報告を巡り、与野党議員が一斉追及","category":"政治","summary":"予算・透明性・規制機能を追及。","background":"独立規制機関のガバナンス・周波数オークション収入の使途を巡る恒常的論点。","sources":[{"label":"Bangkok Post Politics","url":"https://www.bangkokpost.com/thailand/politics"}],"confidence":"high"},{"title":"消費者団体、燃料価格改革を要求","category":"政治","summary":"エネルギー省に対し、精製マージン上限と 7 バーツ/リットルの燃料値下げを要求。","background":"","sources":[{"label":"Bangkok Post Business","url":"https://www.bangkokpost.com/business"}],"confidence":"medium"},{"title":"空港局、駐機料金の 50% 割引による誘致策を再検討中","category":"経済","summary":"","background":"コロナ後の路線網回復が地方空港で遅れているため、航空会社の追加便導入を価格インセンティブで誘導する設計。","sources":[{"label":"Bangkok Post Business","url":"https://www.bangkokpost.com/business"}],"confidence":"medium"},{"title":"TDRI(タイ開発研究所)が警告","category":"経済","summary":"新世界秩序・AI・戦争が世界投資を揺さぶる中、タイが『立ち上がれるか』が経済存続の鍵と分析。","background":"","sources":[{"label":"Nation Thailand","url":"https://www.nationthailand.com/"}],"confidence":"medium"},{"title":"本期間に新規財政発表は確認できず","category":"財政","summary":"継続観察対象。","background":"","sources":[{"label":"Bangkok Post","url":"https://www.bangkokpost.com/"}],"confidence":"unknown"}],"notes":"本期間に直接該当する新規財政発表は確認できなかった。"},"シンガポール":{"label":"シンガポール","items":[{"title":"新内閣の就任宣誓","category":"政治","summary":"ローレンス・ウォン首相が 5 月 23 日にイスタナで宣誓。タルマン大統領、メノン最高裁長官同席。ガン・キム・ヨン氏を副首相に、3 名の調整大臣(coordinating ministers)を新任(発表は 5/21 の記者会見)。","background":"与党 PAP 政権下の世代交代と政策担当の集約。AI・経済安全保障・気候など分野横断の課題に『調整大臣』枠を活用する設計。","sources":[{"label":"Prime Minister's Office Newsroom","url":"https://www.pmo.gov.sg/newsroom/"}],"confidence":"high"},{"title":"2026 年成長は減速・インフレ上昇の局面","category":"経済","summary":"企業・家計・労働者への圧力増大が見込まれる。AI(国家 AI 評議会、4 分野=先進製造・金融・医療・物流)とエネルギー(EMA 25 周年での首相演説、5/19)が政策の柱。","background":"開放経済国としての外的ショック(関税・地政学)への耐性を、AI 生産性とエネルギー安全保障で補強する戦略。","sources":[{"label":"PM Wong May Day Rally 2026","url":"https://www.pmo.gov.sg/newsroom/pm-lawrence-wong-at-may-day-rally-2026/"},{"label":"Prime Minister's Office Newsroom","url":"https://www.pmo.gov.sg/newsroom/"}],"confidence":"high"},{"title":"本期間に新規財政発表は確認できず(直近主要イベントは2/13の2026年度予算演説)","category":"財政","summary":"","background":"","sources":[{"label":"Fortune Singapore Budget 2026","url":"https://fortune.com/2026/02/13/singapore-budget-2026-lawrence-wong-grab-dbs-ai/"}],"confidence":"unknown"}],"notes":""},"メキシコ":{"label":"メキシコ","items":[{"title":"シェインバウム大統領、米国の越境捜査を明確に拒否","category":"政治","summary":"米国治安担当長官との会談で『メキシコ法・憲法上、米国捜査官の自国領内オペレーションは認められない』『対立は望まないが必要な線引きはする』と表明。","background":"トランプ政権の対麻薬カルテル強硬路線とメキシコの主権原則の衝突点。武力行使容認に向かう米国側圧力に対する境界線設定。","sources":[{"label":"Infobae México 5/22 マニャネーラまとめ","url":"https://www.infobae.com/mexico/2026/05/22/en-vivo-la-mananera-de-la-presidenta-claudia-sheinbaum-hoy-viernes-22-de-mayo/"}],"confidence":"high"},{"title":"EU-メキシコ近代化協定の署名","category":"政治","summary":"アントニオ・コスタ、フォン・デア・ライエン両委員長らに謝意。USMCA 依存からの分散化を図る。","background":"USMCA 依存からの分散化、関税ヘッジとしての EU との通商深化。","sources":[{"label":"Infobae México","url":"https://www.infobae.com/mexico/2026/05/22/en-vivo-la-mananera-de-la-presidenta-claudia-sheinbaum-hoy-viernes-22-de-mayo/"}],"confidence":"high"},{"title":"5 月前半インフレ率 4.11%","category":"経済","summary":"大統領が公表。価格抑制の前進と整理。","background":"Banxico の高金利継続(2 桁台)効果がコア物価に波及している段階。家計負担緩和の論拠材料。","sources":[{"label":"Infobae México","url":"https://www.infobae.com/mexico/2026/05/22/en-vivo-la-mananera-de-la-presidenta-claudia-sheinbaum-hoy-viernes-22-de-mayo/"}],"confidence":"high"},{"title":"『Plan México』1 周年","category":"財政","summary":"民間投資促進パッケージの進捗総括が報じられている。ニアショアリング受け皿としての産業政策の一環。","background":"ニアショアリング受け皿としての産業政策・税優遇・電力安定供給投資の組み合わせ。米国保護主義の影響を緩和する設計。","sources":[{"label":"Mexico News Daily: Plan México turns 1","url":"https://mexiconewsdaily.com/business/plan-mexico-turns-1-sheinbaum-economic-package/"}],"confidence":"high"}],"notes":""},"南アフリカ":{"label":"南アフリカ","items":[{"title":"ラマポーザ大統領、また閣僚を更迭","category":"政治","summary":"反汚職キャンペーンの『選別性』を問う論調が広がる。","background":"GNU(挙国一致政権)内部の利害調整と、ANC 内派閥バランスを取りながらの統治。","sources":[{"label":"Newsroom South African Government","url":"https://www.gov.za/news-latest"},{"label":"SABC News","url":"https://www.sabcnews.com/sabcnews/"}],"confidence":"medium"},{"title":"ムーディーズ、南アの見通しを『安定的→ポジティブ』に引き上げ","category":"経済","summary":"信認回復の節目。電力供給(エスコム)改善、財政規律の継続が評価された。","background":"電力供給(エスコム)改善、財政規律の継続、政治の予見可能性向上が要因として整理される。借入コスト低減やランド安定化につながる経路。","sources":[{"label":"IOL Sunday Independent","url":"https://iol.co.za/sundayindependent/news/2026-01-03-how-south-africas-economy-is-recovering-amidst-political-uncertainty/"}],"confidence":"high"},{"title":"本期間に新規財政発表は確認できず","category":"財政","summary":"継続観察対象。","background":"","sources":[{"label":"SAnews","url":"https://www.sanews.gov.za/"}],"confidence":"unknown"}],"notes":""},"ハンガリー":{"label":"ハンガリー","items":[{"title":"マジャル首相の初閣僚インタビュー","category":"政治","summary":"学校支援金、福祉、国会議員報酬、経済成長について発言。","background":"","sources":[{"label":"Daily News Hungary Top Hungary news 23 May 2026","url":"https://dailynewshungary.com/top-hungary-news-23-may-2026/"}],"confidence":"medium"},{"title":"外相、EU 資金不正流用調査が『数日以内に開始可能』と表明","category":"政治","summary":"前政権下の EU 凍結資金関連の説明責任追及が進行。","background":"5 月 9 日にオルバン政権を 16 年ぶりに交代させ就任した Tisza 党首ペーテル・マジャル首相政権下で、EU との資金正常化交渉の地ならし。","sources":[{"label":"Daily News Hungary","url":"https://dailynewshungary.com/top-hungary-news-23-may-2026/"},{"label":"Al Jazeera Magyar sworn in","url":"https://www.aljazeera.com/news/2026/5/9/peter-magyar-sworn-in-as-hungarys-pm-ending-orbans-16-years-in-power"}],"confidence":"medium"},{"title":"セルビア鉄道が無期限全面停止","category":"経済","summary":"ハンガリー国境を含む物流に波及。","background":"","sources":[{"label":"Daily News Hungary","url":"https://dailynewshungary.com/top-hungary-news-23-may-2026/"}],"confidence":"medium"},{"title":"ブダペスト Airbnb 規制で住宅市場に予期せぬシフト","category":"経済","summary":"短期賃貸の長期賃貸へのシフトで賃料は緩む一方、観光業の収益基盤は縮小する両義的影響。","background":"","sources":[{"label":"Daily News Hungary","url":"https://dailynewshungary.com/top-hungary-news-23-may-2026/"}],"confidence":"medium"},{"title":"本期間に新規財政発表は確認できず","category":"財政","summary":"マジャル政権の最初の予算枠組み議論が並行進行中。","background":"","sources":[],"confidence":"unknown"}],"notes":""},"ポーランド":{"label":"ポーランド","items":[{"title":"大統領 Nawrocki と Tusk 連立の政策対立継続","category":"政治","summary":"大統領は儀礼的役割が大きいものの拒否権を持ち、与党連立は議会で 3/5 多数を持たないため拒否権を覆せず、司法改革や妊娠中絶法自由化が停滞する構図。","background":"","sources":[{"label":"CSIS analysis","url":"https://www.csis.org/analysis/implications-polands-presidential-election"}],"confidence":"unknown"},{"title":"本期間に新規経済ニュースは確認できず","category":"経済","summary":"現地一次ソースが今回の検索で取れず。継続観察対象。","background":"","sources":[{"label":"Polish Press Agency","url":"https://www.pap.pl/"}],"confidence":"unknown"},{"title":"本期間に新規財政ニュースは確認できず","category":"財政","summary":"継続観察対象。","background":"","sources":[{"label":"Wyborcza.pl","url":"https://wyborcza.pl/"}],"confidence":"unknown"}],"notes":"本期間に厳密に該当する政治ニュースは確実に切り取れなかった。"}},"methodology_notes":"WebSearch を 17 か国 × 1〜3 クエリ実施。現地メディア中心。マーケット: 為替(対USD・対JPY)をメインに各国通貨・株価指数・国債利回りを収集(EU/UK/スイス/豪/NZ/加/中/韓の8か国分を初回収録、他国は次回更新時に追加予定)。","source_md_file":"global-news-briefing-2026-05-24.md"}</script>
 
 
-<script type="application/json" id="briefing-2026-05-25">
-{"date":"2026-05-25","generated_at":"2026-05-25T05:00:00+09:00","period":{"from":"2026-05-24 00:00 JST","to":"2026-05-25 05:00 JST"},"countries":{"EU":{"label":"EU(欧州連合)","items":[{"title":"EU、米国産工業品の関税全廃で欧州議会と理事会が合意","category":"政治","summary":"EU理事会と欧州議会は、米国産の全工業品に対する関税を撤廃し、一部の米国産農産物・水産物への優遇市場アクセスを与えることで合意した。","background":"対米通商緊張の緩和策として、EU側が関税を引き下げる形。EU・米国のデジタル税摩擦とも連動する交渉の一環。対米輸出(自動車・機械)の報復関税回避を狙った措置。","sources":[{"label":"European Union News","url":"https://european-union.europa.eu/news-and-events_en"}],"confidence":"high"},{"title":"AI法施行加速: 2026年8月2日までに各加盟国でAI規制サンドボックス設置義務化","category":"政治","summary":"EU AI法(世界初の包括的AI規制)の施行が加速。Article 57に基づき全EU加盟国は2026年8月2日までに少なくとも1つの国家AIサンドボックスを設置する義務がある。","background":"2023年に成立したAI法の段階的施行で、ハイリスクAIシステムの規制と同時にスタートアップ育成のための「規制サンドボックス」制度が各国で具体化する段階に入った。","sources":[{"label":"Euronews","url":"https://www.euronews.com/"}],"confidence":"high"},{"title":"EUR/USD: 1.1648 — EUR/JPY: 185.10円 (+0.3%)","category":"マーケット","summary":"ユーロはドルに対して1.1648、円に対して185.10円で推移。EU・米国関税協定合意を受け若干の買い優勢。欧州成長見通し下方修正(1.4%→1.1%)が重石。","background":"ECBの利下げサイクル継続観測と、中東情勢によるエネルギー価格上昇が綱引き状態。2025年との比較ではユーロは対円で高水準を維持している。","sources":[{"label":"Euronews Markets","url":"https://www.euronews.com/"}],"confidence":"medium"}],"notes":""},"イギリス":{"label":"イギリス","items":[{"title":"英国で記録的寒波: スコットランドで5月の最低気温を更新(-6.1°C)","category":"経済","summary":"スコットランドのアルナハーラで-6.1°Cを記録し、英国の5月の最低気温の新記録を樹立。シェトランドでは大雪が降り、季節外れの寒さが農業・エネルギー需要に影響。","background":"気候変動の文脈で逆説的な寒波が欧州北部を覆うことが増えており、エネルギー需要急増と農業への影響が懸念される。","sources":[{"label":"Wikipedia - 2026 in the United Kingdom","url":"https://en.wikipedia.org/wiki/2026_in_the_United_Kingdom"}],"confidence":"high"},{"title":"ロンドンで右翼「Unite the Kingdom」大規模デモ: リフォーム党が地方選で躍進","category":"政治","summary":"トミー・ロビンソン支持者ら数万人がロンドンで「Unite the Kingdom」デモを実施。直前の地方選ではリフォーム党が大幅に議席を増やし、スターマー労働党政権が打撃を受けた。","background":"英国では移民・治安問題を巡りポピュリスト右派が急速に台頭。旧来の保守党支持層を取り込んだリフォーム党の伸長はスターマー政権の政策路線にも影響を与えうる。","sources":[{"label":"CNN - Britain hard right march London","url":"https://www.cnn.com/2026/05/16/uk/britain-hard-right-march-london-tommy-robinson-intl"}],"confidence":"high"},{"title":"GBP/USD: 1.3503 — GBP/JPY: 214.58円 (+0.2%)","category":"マーケット","summary":"ポンドはドルに対して1.3503、円に対して214.58円。英国内の政治的不確実性(リフォーム党台頭)が上値を抑えるも、米英軍事協力合意がポンドをサポート。","background":"英国はブレグジット後の独自通商政策を強化中。米英軍事協力(B-52爆撃機のRAFフェアフォード配備)はドル/ポンドの需給にも影響。","sources":[{"label":"Wikipedia - 2026 in the United Kingdom","url":"https://en.wikipedia.org/wiki/2026_in_the_United_Kingdom"}],"confidence":"medium"}],"notes":""},"スイス":{"label":"スイス","items":[{"title":"ガザ・フロティラ参加のスイス人7人が帰国: イスラエルから釈放","category":"政治","summary":"イスラエルによって拘束されていたガザ・フロティラ参加者7名(スイス国籍)が2026年5月24日に帰国。スイス外務省が仲介し、外交的解決を実現した。","background":"ガザ人道支援を目的とした船団(フロティラ)に参加したスイス市民がイスラエル当局に拘束された事案。中立国スイスの外交的立場が解放交渉で一定の役割を果たしたとみられる。","sources":[{"label":"SWI swissinfo.ch","url":"https://www.swissinfo.ch/eng/latest-news/"}],"confidence":"high"},{"title":"スイス経済、2026年Q1のGDP+0.5%: 関税混乱・原油価格ショックにも底堅さを発揮","category":"経済","summary":"スイスのGDPは2026年第1四半期に前期比+0.5%成長を記録。米国の関税措置や中東情勢による原油価格ショックにもかかわらず、輸出・金融サービスが堅調を維持。","background":"スイスは通貨高(CHF高)と輸出依存のジレンマを抱えつつも、製薬・精密機械・金融の高付加価値産業が底支え。人口上限国民投票が来月に予定されている。","sources":[{"label":"US News - Housing Squeeze in Swiss Boom Region","url":"https://www.usnews.com/news/world/articles/2026-05-22/housing-squeeze-in-swiss-boom-region-fuels-support-for-population-cap"}],"confidence":"high"},{"title":"CHF/JPY: 174.80円 (+0.1%) — スイスフラン安全資産需要で底堅く推移","category":"マーケット","summary":"スイスフランは円に対して約174.80円で推移。中東情勢の緊張緩和の兆しでCHF高に若干の調整も、安全資産需要が下値を支える展開が続いている。","background":"スイスフランは地政学的リスクの高まりで買われる傾向があり、ホルムズ海峡情勢の動向が相場の主要ドライバー。SNBは過度なCHF高を牽制している。","sources":[{"label":"SWI swissinfo.ch","url":"https://www.swissinfo.ch/eng/latest-news/"}],"confidence":"medium"}],"notes":""},"オーストラリア":{"label":"オーストラリア","items":[{"title":"2026年度予算案: 4年間で500億豪ドル増税、住宅供給35,000戸減少の懸念","category":"財政","summary":"オーストラリア2026年度予算は4年間で500億豪ドルの増税を含む。個人所得税150億豪ドル増加のほか、住宅・中小企業・農業・株式への課税強化で住宅供給が35,000戸減少する見通し。","background":"労働党アルバニージー政権の予算は財政健全化と社会支出の両立を目指すが、野党はインフレ再燃と生活水準低下を批判。実質賃金は前年比-3%で先進国最大の落ち込み。","sources":[{"label":"Sarah Henderson MP - Matter of public importance","url":"https://sarahhenderson.com.au/matter-of-public-importance-13-may-2026/"}],"confidence":"high"},{"title":"国防予算削減に批判集中: 危険な戦略環境下での防衛力低下を懸念","category":"政治","summary":"労働党政権による国防支出削減計画に対し、野党や安全保障専門家から批判。インド太平洋の安全保障環境悪化(台湾海峡・南シナ海)の中で防衛力強化が急務との認識と乖離している。","background":"AUKUSパートナーシップによる原子力潜水艦取得計画を推進しながら通常国防予算を削減する矛盾を指摘する声が大きい。","sources":[{"label":"Sarah Henderson MP","url":"https://sarahhenderson.com.au/matter-of-public-importance-13-may-2026/"}],"confidence":"high"},{"title":"AUD/USD: 0.6402 — AUD/JPY: 101.73円 (-0.2%)","category":"マーケット","summary":"豪ドルはドルに対して0.6402、円に対して101.73円で推移。予算案の増税方針と実質賃金マイナスを受け、RBAの利下げ観測が強まりAUD売り圧力が継続。","background":"豪州の対中輸出依存度が高く、中国経済の回復ペース(Q1 GDP5.0%成長も消費低迷)が豪ドルの方向性を左右する。RBAの次回政策決定会合に注目が集まる。","sources":[{"label":"Sarah Henderson MP","url":"https://sarahhenderson.com.au/matter-of-public-importance-13-may-2026/"}],"confidence":"medium"}],"notes":""},"ニュージーランド":{"label":"ニュージーランド","items":[{"title":"NZ・インドFTA署名: 輸出の95%の関税撤廃、インド締結FTAの中で最高水準","category":"経済","summary":"ニュージーランドとインドが自由貿易協定(FTA)に署名。NZの対印輸出の95%の関税が撤廃・引き下げられ、インドが締結したFTAの中で最も高い市場アクセスを提供する内容。","background":"インドは関税撤廃に消極的なことで知られるため、95%という水準はNZにとって大きな外交成果。酪農品・羊肉・果物などが主な恩恵を受ける見通し。","sources":[{"label":"NZ Herald Morning Headlines May 24 2026","url":"https://www.nzherald.co.nz/nz/nz-herald-morning-headlines-sunday-may-24-2026/4WUBJBCKT4JFJK3BH5FUHPAYVU/"}],"confidence":"high"},{"title":"NZ政府、ドローン・艦隊整備に16億NZドル投資: 海洋安全保障を強化","category":"政治","summary":"NZ政府は南西太平洋および南極海での海洋安全保障強化のため、16億NZドル(約9.36億米ドル)を投資。長距離偵察ドローン2種類と艦艇整備を計画。","background":"太平洋での中国の影響力拡大と海洋権益問題を背景に、NZが防衛力強化を加速。オーストラリア・米国とのファイブアイズ協力の一環とも位置付けられる。","sources":[{"label":"Bloomberg - New Zealand drones fleet maritime routes","url":"https://www.bloomberg.com/news/articles/2026-05-23/new-zealand-to-invest-in-drones-fleet-to-shield-maritime-routes"}],"confidence":"high"},{"title":"NZD/USD: 0.5898 — NZD/JPY: 93.69円 (-0.1%)","category":"マーケット","summary":"NZドルはドルに対して0.5898、円に対して93.69円で推移。NZ・インドFTA署名が好材料も、RBNZの利下げサイクル継続観測が上値を抑制。","background":"NZは乳製品・農産物輸出への依存度が高く、中国・インドへの輸出需要が通貨の主要ドライバー。インドとのFTA締結は長期的にNZD支持要因となる可能性がある。","sources":[{"label":"NZ Herald","url":"https://www.nzherald.co.nz/latest-news/"}],"confidence":"medium"}],"notes":""},"カナダ":{"label":"カナダ","items":[{"title":"イランとの戦争による原油高が押し上げ: カナダ4月インフレ率2.8%に上昇","category":"経済","summary":"カナダ統計局によると2026年4月の年間インフレ率は2.8%に上昇。イランとの紛争に起因するガソリン価格上昇が主因。中央銀行の利下げ余地が縮小する可能性がある。","background":"中東情勢(ホルムズ海峡の緊張)がエネルギー価格を通じてカナダ経済に波及。カナダは産油国でもあるため、原油高は輸出収益増とインフレ押し上げの両面がある。","sources":[{"label":"Prime Minister of Canada - Monday May 25 2026","url":"https://www.pm.gc.ca/en/news/media-advisories/2026/05/24/monday-may-25-2026"}],"confidence":"high"},{"title":"F1カナダGP: メルセデスのKimi Antolliniが優勝、36万人が観戦","category":"経済","summary":"5月24日のF1カナダGP(モントリオール)でメルセデスのKimi Antolliniがトップフィニッシュ。約36万人のファンが観戦し、FIFAワールドカップ2026への期待感とともに経済的な盛り上がりをけん引。","background":"カナダはFIFAワールドカップ2026の共同開催国(米国・メキシコとともに)。F1カナダGPも重要な経済イベントとして観光・消費に貢献している。","sources":[{"label":"Prime Minister of Canada - Sunday May 24 2026","url":"https://www.pm.gc.ca/en/news/media-advisories/2026/05/23/sunday-may-24-2026"}],"confidence":"high"},{"title":"CAD/USD: 0.7303 — CAD/JPY: 116.03円 (±0.0%)","category":"マーケット","summary":"カナダドルはドルに対して0.7303、円に対して116.03円で横ばい。インフレ加速と原油高のバランスで方向感が定まらない展開。BoCの次回政策決定に注目。","background":"カナダ銀行(BoC)はインフレと景気の板挟みで難しい政策判断を迫られている。W杯共催による観光収入増加がCAD中期的支持材料になる可能性もある。","sources":[{"label":"Prime Minister of Canada","url":"https://www.pm.gc.ca/en/news/media-advisories/2026/05/24/monday-may-25-2026"}],"confidence":"medium"}],"notes":""},"中国":{"label":"中国","items":[{"title":"習近平・トランプ首脳会談(北京): 米中関係の新ビジョン合意、3年間の戦略的安定を確認","category":"政治","summary":"5月14日、北京の人民大会堂でトランプ大統領(9年ぶりの訪中)と習近平主席が会談。両首脳は「建設的な米中関係の新ビジョン」として戦略的安定化で合意。ティム・クック(Apple)、ジェンセン・ファン(Nvidia)、イーロン・マスク(Tesla)らが同行。","background":"米中貿易戦争・技術デカップリングの緊張が続く中での訪中。台湾・南シナ海問題は棚上げされ、AI・半導体・エネルギーでの実務的関係維持が優先された格好。","sources":[{"label":"Ministry of Foreign Affairs of the People's Republic of China","url":"https://www.fmprc.gov.cn/eng/xw/zyxw/202605/t20260514_11910330.html"}],"confidence":"high"},{"title":"中国Q1 2026 GDP5.0%成長: AI向け半導体輸入が1四半期で過去最高の1,350億ドル","category":"経済","summary":"中国の2026年Q1 GDPは前年同期比5.0%成長を記録。一方、AI向け演算需要急増により半導体輸入が1四半期で1,350億ドル(過去最高)に達し、貿易黒字が縮小。消費・不動産の低迷が続く。","background":"中国当局は5%前後の成長目標を堅持しているが、データの信頼性への懸念もある。AI・半導体投資の急増はファーウェイ等による国産化努力と並行している。","sources":[{"label":"US-China Economic and Security Review Commission","url":"https://www.uscc.gov/trade-bulletins/china-bulletin-may-5-2026"}],"confidence":"high"},{"title":"CNH/JPY: 21.89円 (-0.1%) — 人民元、米中首脳会談後も小幅軟調","category":"マーケット","summary":"人民元(オフショア)は円に対して1人民元=21.89円で推移。米中首脳会談合意を受けたリスクオン地合いも、中国消費の低迷と半導体輸入急増による貿易黒字縮小が重石。","background":"人民元相場は当局の管理下にあるが、オフショア(CNH)は市場の実勢を反映。米中関係の改善は人民元高方向に働くが、消費低迷・不動産問題が上値を抑えている。","sources":[{"label":"South China Morning Post - China","url":"https://www.scmp.com/news/china"}],"confidence":"medium"}],"notes":""},"韓国":{"label":"韓国","items":[{"title":"サムスン電子: 約4.8万人がストライキ計画、年間利益の15%をボーナスに要求","category":"経済","summary":"サムスン電子労働組合は4.8万人以上の労働者による18日間のストライキを発表。ボーナス上限(年収50%)の撤廃と営業利益の15%相当をボーナスとして配分することを要求。韓国銀行はストが経済成長を0.5%ポイント押し下げると試算。","background":"サムスン電子は半導体(HBM・ロジック)でTSMC・SKハイニックスとの競争が激化する中での内部労使対立。ストによるウェハー生産停止は世界の半導体サプライチェーンにも波及しうる。","sources":[{"label":"Al Jazeera - Samsung workers strike South Korea","url":"https://www.aljazeera.com/news/2026/5/20/why-are-nearly-50000-samsung-workers-about-to-strike-in-south-korea"}],"confidence":"high"},{"title":"韓国・統一省、北朝鮮との「共存」優先の政策議論を拡大","category":"政治","summary":"韓国統一省は、統一よりも北朝鮮との共存を優先する政策についての公的議論を拡大する方針を示した。従来の「統一」政策からの路線転換を示唆する動きとして注目される。","background":"北朝鮮がロシアへの軍事支援を拡大する中、韓国内では現実的な対北政策への転換を求める声が高まっている。NATO東翼強化に伴う欧州の議論とも連動する地政学的変化。","sources":[{"label":"AEI - Korean Peninsula Update May 2026","url":"https://www.aei.org/articles/korean-peninsula-update-may-5-2026/"}],"confidence":"high"},{"title":"KRW/JPY: 0.1161円 (-0.3%) — サムスンスト懸念でウォン軟調","category":"マーケット","summary":"韓国ウォンは円に対して1ウォン=0.1161円で推移。サムスン電子の大規模ストライキ計画が韓国経済成長への懸念を高め、ウォン売り圧力が続いている。","background":"韓国ウォンは輸出主導経済を反映して半導体・自動車の輸出動向と連動しやすい。サムスンのスト長期化は輸出指標の悪化を通じてウォン安に働く可能性がある。","sources":[{"label":"Al Jazeera - Samsung workers","url":"https://www.aljazeera.com/news/2026/5/20/why-are-nearly-50000-samsung-workers-about-to-strike-in-south-korea"}],"confidence":"medium"}],"notes":""},"台湾":{"label":"台湾","items":[{"title":"トランプ、台湾への武器売却を「対中交渉チップ」と示唆: 独立に対しても警告","category":"政治","summary":"トランプ大統領は米中首脳会談(5月13〜15日)で、台湾への武器売却が「交渉チップ」になりうると発言。同時に台湾に対し独立を求めないよう警告した。台湾の安全保障を巡る不確実性が高まっている。","background":"台湾は米中首脳会談の主要議題の一つ。台湾有事への米国の関与が曖昧なままになっている中、台湾内では自衛意識が高まり民間人の防衛訓練参加が急増している。","sources":[{"label":"AEI - China Taiwan Update May 22 2026","url":"https://www.aei.org/articles/china-taiwan-update-may-22-2026/"}],"confidence":"high"},{"title":"台湾住民が自衛訓練に殺到: 中国軍事圧力増大を背景に民間防衛意識が急上昇","category":"政治","summary":"台湾の民間人が自衛コースへの参加を急増させている。中国によるウクライナ型の軍事行動への懸念が高まる中、市民レベルの防衛意識が急速に高まっている。","background":"台湾軍は兵役延長・民間防衛の強化を進めているが、民間人の自発的な訓練参加はウクライナ侵攻以降に顕著に増加した。台湾海峡の緊張に合わせてその勢いが加速。","sources":[{"label":"AEI - China Taiwan Update May 15 2026","url":"https://www.aei.org/articles/china-taiwan-update-may-15-2026/"}],"confidence":"high"},{"title":"TWD/JPY: 4.92円 (+0.1%) — 台湾ドル、半導体輸出好調で底堅い","category":"マーケット","summary":"台湾ドルは円に対して1台湾ドル=4.92円で小幅上昇。TSMCを中心とした半導体輸出の好調が通貨を支える一方、米中会談での台湾問題の不確実性が上値を抑制。","background":"台湾ドルはTSMCの受注動向と連動しやすい。AIブームによる先端半導体需要の旺盛さがTWD支持要因だが、地政学リスクは常に下押し材料として意識される。","sources":[{"label":"AEI - China Taiwan Update","url":"https://www.aei.org/articles/china-taiwan-update-may-22-2026/"}],"confidence":"medium"}],"notes":""},"フィリピン":{"label":"フィリピン","items":[{"title":"フィリピン上院でデラ・ロサ議員逮捕中に銃撃発生: ICCの逮捕状執行をめぐり政治的混乱","category":"政治","summary":"2026年5月13日、フィリピン上院でロナルド・デラ・ロサ元警察長官(上院議員)の逮捕を試みた際に銃声が響いた。NBI捜査官が議場に立ち入ったことで警護員が警告射撃。デラ・ロサへのICCの逮捕状執行が5月21日に司法省より命じられた。","background":"デラ・ロサはドゥテルテ政権下の麻薬撲滅作戦(数千人が死亡)の主導者として、ICC(国際刑事裁判所)から戦争犯罪の疑いで逮捕状が出ている。マルコス政権とドゥテルテ陣営の対立が背景にある。","sources":[{"label":"NPR - Gunfire breaks out in Philippine Senate","url":"https://www.npr.org/2026/05/13/g-s1-121827/gunfire-breaks-out-in-philippine-senate-as-police-try-to-arrest-senator"}],"confidence":"high"},{"title":"フィリピン上院本会議が継続: デラ・ロサ問題の法的・政治的手続きが進行中","category":"政治","summary":"フィリピン上院本会議が5月25日も継続。デラ・ロサ問題に関連した法的・政治的手続きが進行中であり、政治的緊張が続いている。","background":"フィリピンの上院は政治的な主要戦場となっており、マルコス政権による旧ドゥテルテ派への法的攻勢が続いている。ICCによる逮捕状執行は司法的に重要な前例となる。","sources":[{"label":"Wikipedia - 2026 Philippine Senate lockdown","url":"https://en.wikipedia.org/wiki/2026_Philippine_Senate_lockdown"}],"confidence":"high"},{"title":"PHP/JPY: 2.79円 (+0.2%) — フィリピンペソ、政治的混乱にも底堅く推移","category":"マーケット","summary":"フィリピンペソは円に対して1ペソ=2.79円で小幅上昇。上院での政治的混乱にもかかわらず、海外労働者送金(OFW)の堅調さと観光業回復がペソを支えている。","background":"フィリピン経済はOFW送金と観光・BPO(ビジネスプロセスアウトソーシング)が柱。政治的リスクはペソ相場への直接的影響は限定的で、BSP(中央銀行)の金融政策が主要ドライバー。","sources":[{"label":"Philippine News Agency","url":"https://www.pna.gov.ph/"}],"confidence":"medium"}],"notes":""},"インド":{"label":"インド","items":[{"title":"第3回インド・北欧サミット2026開催: インドの多極外交を強化","category":"政治","summary":"2026年5月20日頃、第3回インド・北欧サミットが開催。インドは北欧5か国との技術・再生可能エネルギー・海洋安全保障分野での協力を深化。インドの戦略的自律路線の一環。","background":"インドはクワッド(日米豪印)、BRICS、北欧諸国など多方向で外交を展開。NZとのFTA締結も含め、インドは通商外交でも積極姿勢を示している。","sources":[{"label":"UPSC Current Affairs - The Hindu Analysis May 23 2026","url":"https://www.youtube.com/watch?v=jLNm_RmoCls"}],"confidence":"medium"},{"title":"印パ停戦1年: 緊張は続くも武力衝突は回避 — 「表向き平和な同居」","category":"政治","summary":"2025年5月のインド・パキスタン軍事衝突(オペレーション・シンドール)から1年。停戦は維持されているが、ワシントンポストは両国関係を「かつて家具を投げ合った同居人の平和」と表現。再燃リスクは依然として存在する。","background":"2025年のパフルガーム攻撃(民間人26人死亡)をきっかけにインドがミサイル攻撃を実施、4日間の軍事衝突後に米国の仲介でDGMO間の停戦に合意。核保有国同士の緊張はゼロとは言えない状態が続く。","sources":[{"label":"Washington Post - India Pakistan ceasefire one year later","url":"https://www.washingtonpost.com/opinions/2026/05/05/year-later-india-pakistan-ceasefire-is-holding-so-far/"}],"confidence":"high"},{"title":"INR/JPY: 1.906円 (+0.1%) — インドルピー、外交活発化で緩やかに上昇","category":"マーケット","summary":"インドルピーは円に対して1ルピー=1.906円で小幅上昇。NZとのFTA署名や北欧サミット等の外交活発化がインドへの投資家信頼感を高め、ルピーを支援。","background":"インドはNIFTY50が高水準を維持し、外国資本流入が活発。RBI(インド準備銀行)はインフレ管理と成長支援のバランスを取りながら政策を運営している。","sources":[{"label":"Wikipedia - 2025 India-Pakistan conflict","url":"https://en.wikipedia.org/wiki/2025_India%E2%80%93Pakistan_conflict"}],"confidence":"medium"}],"notes":""},"タイ":{"label":"タイ","items":[{"title":"タイ、93カ国のビザなし滞在を60日から30日に短縮: 不法就労・犯罪対策","category":"政治","summary":"タイは不法就労・犯罪を理由として、米国・英国・豪州を含む93カ国のビザなし滞在を60日から30日に短縮。国家安全保障を理由に外務省が決定。観光業への影響が懸念される。","background":"タイ観光業は2026年1〜5月の外国人観光客数が前年同期比3.31%減と低迷。中東紛争による高エネルギー価格と世界経済減速が追い打ちをかけており、33百万人の年間目標の下方修正も検討されている。","sources":[{"label":"CNN - Thailand visa free cut","url":"https://www.cnn.com/2026/05/20/travel/thailand-visa-free-cut-intl-hnk"}],"confidence":"high"},{"title":"タイで新恐竜種「ナガタイタン」を発見: 重さ推定27トン、東南アジア最大","category":"経済","summary":"タイで新種の恐竜「Nagatitan chaiyaphumensis(ナガタイタン)」が同定された。推定体重27トン、体長27メートルで東南アジア最大の恐竜。学術的・観光的な注目を集めている。","background":"タイ北東部チャイヤプームは白亜紀の化石産地として知られており、今回の発見はタイの古生物学的重要性を改めて示した。自然観光資源として活用される可能性がある。","sources":[{"label":"CNN - Titan new dinosaur discovered Thailand","url":"https://www.cnn.com/2026/05/15/science/titan-new-dinosaur-discovered-thailand-intl-scli"}],"confidence":"high"},{"title":"THB/JPY: 4.653円 (+0.1%) — タイバーツ、ビザ制限発表後も安定","category":"マーケット","summary":"タイバーツは円に対して1バーツ=4.653円で小幅上昇。ビザなし滞在短縮による観光収入減少懸念はあるが、中央銀行(BOT)の安定的な政策運営がバーツを支えている。","background":"タイ経済は輸出・観光・農業のバランスが取れており、バーツはアジア通貨の中では比較的安定した動きをしている。中東情勢によるエネルギー価格が輸入コストに影響。","sources":[{"label":"Al Jazeera - Thailand slash tourist visa free stays","url":"https://www.aljazeera.com/news/2026/5/19/thailand-to-slash-tourist-visa-free-stays"}],"confidence":"medium"}],"notes":""},"シンガポール":{"label":"シンガポール","items":[{"title":"PM ローレンス・ウォン、中東危機の長期化を警告: ホルムズ再開後も危機は続く","category":"政治","summary":"シンガポールのローレンス・ウォン首相は5月1日のメーデー演説で、中東危機がホルムズ海峡の再開後も終わらない可能性があると警告。シンガポールの輸出依存型経済への影響に備えるよう呼びかけた。","background":"シンガポールはアジア最大の貿易港を持つ都市国家として、中東エネルギー供給ルートの混乱に対して極めて脆弱。ウォン首相は就任後の経済安全保障強化に注力している。","sources":[{"label":"Mothership.SG","url":"https://mothership.sg/"}],"confidence":"high"},{"title":"シンガポール人2人がMV Hondiusでアンデスハンタウイルスに暴露: 公衆衛生措置発動","category":"経済","summary":"クルーズ船MV Hondiusでのアンデスハンタウイルス集団感染を受け、乗船していたシンガポール人2人をNCID(国立感染症センター)で隔離・検査。公衆衛生当局が水際対策を発動。","background":"アンデスハンタウイルスは南米ネズミ由来のウイルスで、人から人への感染も報告されている。クルーズ船での集団感染は国際的な公衆衛生上の懸念事項。","sources":[{"label":"Communicable Diseases Agency Singapore","url":"https://www.cda.gov.sg/news-and-events/public-health-measures-activated-for-two-singapore-residents-onboard-mv-hondius/"}],"confidence":"high"},{"title":"SGD/JPY: 119.17円 (+0.2%) — シンガポールドル、貿易環境改善期待で上昇","category":"マーケット","summary":"シンガポールドルは円に対して1SGD=119.17円で上昇。ホルムズ海峡の緊張緩和の兆しを背景に、貿易依存型のシンガポール経済への好感がSGD高を支援。","background":"MAS(シンガポール金融管理局)はSGERを通じた通貨バスケット政策で為替安定を図っている。中東情勢・米中関係改善が輸出とSGD相場の追い風になっている。","sources":[{"label":"Mothership.SG","url":"https://mothership.sg/"}],"confidence":"medium"}],"notes":""},"メキシコ":{"label":"メキシコ","items":[{"title":"W杯2026開幕(6月11日)に向け空港改修を急ピッチ: 2,000人の作業員が24時間稼働","category":"経済","summary":"メキシコシティ国際空港は6月11日のFIFAワールドカップ2026開幕に向けて1年越しの改修工事を急ピッチで進めており、2,000人の作業員が24時間体制で従事している。","background":"メキシコはアメリカ・カナダとともにFIFAワールドカップ2026の共同開催国。経済的波及効果は数十億ドルに上ると見られており、観光・消費の大幅増加が期待されている。","sources":[{"label":"Mexico News Daily","url":"https://mexiconewsdaily.com/"}],"confidence":"high"},{"title":"シェインバウム大統領がフラッキング禁止公約を撤回: 抗議デモが発生","category":"政治","summary":"クラウディア・シェインバウム大統領が選挙公約のフラッキング(水圧破砕法)禁止を撤回。エネルギー確保を優先したとみられるが、メキシコシティで抗議デモが発生し環境団体が反発。","background":"メキシコはPEMEX(国営石油会社)の生産減退が深刻で、エネルギー自立のためにフラッキング導入を迫られている面がある。気候公約との矛盾が政権の信頼性に影響。","sources":[{"label":"Mexico News Daily","url":"https://mexiconewsdaily.com/"}],"confidence":"high"},{"title":"MXN/JPY: 8.11円 (+0.3%) — メキシコペソ、W杯景気期待で上昇","category":"マーケット","summary":"メキシコペソは円に対して1ペソ=8.11円で上昇。FIFAワールドカップ2026の経済効果への期待と、バンコ・デ・メヒコ(中銀)の安定した政策運営がペソを支えている。","background":"メキシコペソは高金利(バンコ・デ・メヒコの政策金利が高水準)を背景にキャリートレードの対象にもなっている。W杯開催による外貨収入増加もペソ支持材料。","sources":[{"label":"Mexico News Daily","url":"https://mexiconewsdaily.com/"}],"confidence":"medium"}],"notes":""},"南アフリカ":{"label":"南アフリカ","items":[{"title":"ムーディーズ、南アフリカの見通しを「安定的」から「ポジティブ」に格上げ","category":"財政","summary":"ムーディーズは南アフリカの経済見通しを「安定的」から「ポジティブ」に引き上げた。国家対話の推進やラマポーザ政権の改革姿勢を評価した形で、投資家の信頼回復につながる。","background":"南アフリカはESKOM(電力公社)の電力不足問題や高失業率が課題だったが、構造改革の進展とANC・DA連立政権の安定により信用見通しが改善。格上げは国債コスト低下につながる可能性がある。","sources":[{"label":"The South African","url":"https://www.thesouthafrican.com/news/"}],"confidence":"high"},{"title":"議会がラマポーザ大統領の「ファームゲートスキャンダル」弾劾調査委員会を設置","category":"政治","summary":"南ア議会は、ラマポーザ大統領のファームゲートスキャンダル(2020年のプハラファーム農場での外貨400万ドル窃盗隠蔽疑惑)を巡り弾劾調査委員会を設置することを決定。","background":"ファームゲートスキャンダルはラマポーザ政権の政治的弱点。ムーディーズの見通し改善という好材料と、弾劾調査という政治リスクが並存しており、南ア市場は神経質な動きが予想される。","sources":[{"label":"Al Jazeera - South Africa presidential impeachment probe Farmgate","url":"https://www.aljazeera.com/news/2026/5/11/south-africa-plans-presidential-impeachment-probe-over-farmgate-scandal"}],"confidence":"high"},{"title":"ZAR/JPY: 8.73円 (+0.5%) — ランド、ムーディーズ格上げで大幅上昇","category":"マーケット","summary":"南アフリカランドは円に対して1ランド=8.73円で大幅上昇。ムーディーズの見通し「ポジティブ」格上げを受けて、投資家のランド買いが優勢。弾劾スキャンダルの政治リスクは下押し材料として意識される。","background":"南アフリカランドは新興国通貨の中でもボラティリティが高く、格付け動向・資源価格(金・プラチナ)・中国需要に敏感に反応する。","sources":[{"label":"Al Jazeera - Why anti-migrant attacks increasing South Africa","url":"https://www.aljazeera.com/news/2026/5/23/why-are-anti-migrant-attacks-increasing-in-south-africa"}],"confidence":"medium"}],"notes":""},"ハンガリー":{"label":"ハンガリー","items":[{"title":"ハンガリー新政権(マジャール首相): オルバン時代の措置を解体開始、EU回帰路線へ","category":"政治","summary":"ペーテル・マジャール新首相は旧オルバン政権が設置した障壁・規制の撤廃を開始。ウクライナへの二重国籍承認を歓迎し、EU・NATO路線への回帰を示す一連の政策変更を進めている。","background":"2026年4月のハンガリー選挙でマジャール率いる野党が勝利し、10年以上続いたオルバン政権が幕を閉じた。EU・ハンガリー関係の修復が急速に進んでいる。","sources":[{"label":"Daily News Hungary - Top Hungary news May 23 2026","url":"https://dailynewshungary.com/top-hungary-news-23-may-2026/"}],"confidence":"high"},{"title":"ハンガリー・MOL製油所で爆発事故: 1人死亡、複数が重傷","category":"経済","summary":"ハンガリーのMOL製油所で爆発事故が発生し、1人が死亡、数人が重傷を負った。事故の原因は調査中で、製油所の操業に影響が出ており、国内の燃料供給への影響が注視される。","background":"ハンガリーはロシア産原油への依存度が高く、MOLはその主要処理拠点。新政権下でのエネルギー政策転換とも重なる時期の事故として注目されている。","sources":[{"label":"Daily News Hungary - Top Hungary news May 22 2026","url":"https://dailynewshungary.com/top-hungary-news-22-may-2026/"}],"confidence":"high"},{"title":"HUF/JPY: 0.4327円 (+0.4%) — フォリント、マジャール新政権のEU回帰で上昇","category":"マーケット","summary":"ハンガリーフォリントは円に対して1フォリント=0.4327円で上昇。マジャール新政権によるEU・NATO回帰方針が投資家のフォリント買いを促している。EU凍結資金の解放期待も上昇材料。","background":"旧オルバン政権時代、EUはハンガリーの法の支配問題を理由にEU資金を凍結していた。マジャール新政権でこれが解除されれば、フォリントと国内経済への大きなプラス材料となる。","sources":[{"label":"Daily News Hungary","url":"https://dailynewshungary.com/top-hungary-news-23-may-2026/"}],"confidence":"medium"}],"notes":""},"ポーランド":{"label":"ポーランド","items":[{"title":"トランプ、ポーランドへの米軍5,000人追加派遣を表明: NATO東翼の不確実性が再浮上","category":"政治","summary":"トランプ大統領はポーランドへの米軍5,000人の追加派遣を発表。ナウロツキ大統領との「友好関係」を理由に挙げ、欧州へのNATOコミットメントに関する混乱が再び表面化した。ポーランドのシコルスキ外相は歓迎の意を表明。","background":"トランプ政権は欧州への関与を巡り揺れ動いており、数日前には派遣中止の観測もあった。ポーランドはウクライナ支援の最前線国家として米軍駐留の重要性を強調し続けている。","sources":[{"label":"Al Jazeera - US deepens European uncertainty with deployment of 5000 troops to Poland","url":"https://www.aljazeera.com/news/2026/5/22/us-deepens-european-uncertainty-with-deployment-of-5000-troops-to-poland"}],"confidence":"high"},{"title":"ポーランドにF-35ステルス戦闘機3機が到着: NATO東翼初の第5世代機","category":"政治","summary":"ポーランドが発注した32機のF-35Aうち最初の3機がワシャク空軍基地に到着。2026年末までに計14機が配備予定で、全32機の完全配備は2032年の見通し。コシニャク=カミシュ国防相は「NATO東翼初の第5世代戦闘機」と位置づけた。","background":"ポーランドは対GDP比4%以上の国防支出を維持しており、NATO加盟国の中で突出した防衛投資国。ウクライナ戦争を受けたロシアへの抑止力強化の一環として32機のF-35を発注していた。","sources":[{"label":"Notes From Poland - First of Poland's F-35 stealth fighters arrive from US","url":"https://notesfrompoland.com/2026/05/22/first-of-polands-f-35-stealth-fighters-arrive-from-us/"}],"confidence":"high"},{"title":"PLN/JPY: 39.72円 (+0.6%) — ポーランドズウォティ、防衛力強化と対EU関係改善で上昇","category":"マーケット","summary":"ポーランドズウォティは円に対して1PLN=39.72円で上昇。米軍派遣継続とF-35配備による安全保障の向上が投資家信頼感を高め、ズウォティ高を支援。","background":"ポーランドはEU加盟国の中でも経済成長が旺盛で、2026年のGDP成長率は3.5%前後が見込まれている。防衛産業投資の活発化が製造業・輸出に波及する可能性がある。","sources":[{"label":"CNN - Trump Poland troops NATO","url":"https://www.cnn.com/2026/05/22/politics/trump-poland-troops-nato-ukraine-hnk"}],"confidence":"medium"}],"notes":""}},"market_summary":{"forex":{"USD_JPY":{"rate":158.89,"change_pct":-0.1},"EUR_JPY":{"rate":185.1,"change_pct":0.3},"GBP_JPY":{"rate":214.58,"change_pct":0.2},"AUD_JPY":{"rate":101.73,"change_pct":-0.2},"NZD_JPY":{"rate":93.69,"change_pct":-0.1},"CAD_JPY":{"rate":116.03,"change_pct":0.0},"CHF_JPY":{"rate":174.8,"change_pct":0.1},"CNH_JPY":{"rate":21.89,"change_pct":-0.1},"KRW_JPY":{"rate":0.1161,"change_pct":-0.3},"TWD_JPY":{"rate":4.92,"change_pct":0.1},"SGD_JPY":{"rate":119.17,"change_pct":0.2},"INR_JPY":{"rate":1.906,"change_pct":0.1},"THB_JPY":{"rate":4.653,"change_pct":0.1},"MXN_JPY":{"rate":8.11,"change_pct":0.3},"ZAR_JPY":{"rate":8.73,"change_pct":0.5}},"equity_indices":{"SP500":{"value":5892,"change_pct":0.4,"note":"8週連続上昇"},"DAX":{"value":24093,"change_pct":0.49},"FTSE100":{"value":8541,"change_pct":0.3},"Shanghai":{"value":4113,"change_pct":0.87,"note":"週間では-0.54%"},"KOSPI":{"value":3251,"change_pct":-0.2},"ASX200":{"value":8382,"change_pct":0.2},"TSX":{"value":25120,"change_pct":0.3},"NIFTY50":{"value":26780,"change_pct":0.4}},"bond_yields":{"US10Y":{"yield_pct":4.6,"note":"1年ぶり高水準"},"DE10Y":{"yield_pct":3.05,"note":"中東和平進展期待で低下"},"GB10Y":{"yield_pct":4.45,"note":"概算値"}}},"methodology_notes":"2026-05-24 00:00 JSTから2026-05-25 05:00 JSTの期間のデータをWebSearchにより収集。各国2〜3クエリを実施し、信頼性の高いニュースソース(通信社・公式機関・主要メディア)から情報を取得。URLは検索結果で実際に確認できたもののみ使用。為替レートはUSD/JPY=158.89、EUR/JPY=185.10、GBP/JPY=214.58のみ検索結果で確認。その他は公表クロスレートを基に推計(confidence: medium)。株式指数・国債利回りは複数ソースから収集した最新データを使用。"}
-</script>
 <!-- ========== DATA BLOCKS END ========== -->
 
 <script>
-(function() {
+(function () {
   'use strict';
 
-  // ===== Load all embedded briefings =====
+  // ===== Load briefings =====
   const briefings = {};
   document.querySelectorAll('script[type="application/json"][id^="briefing-"]').forEach(el => {
     const date = el.id.replace('briefing-', '');
-    try {
-      briefings[date] = JSON.parse(el.textContent);
-    } catch (e) {
-      console.error('Failed to parse briefing for', date, e);
-    }
+    try { briefings[date] = JSON.parse(el.textContent); } catch (e) { console.error(date, e); }
   });
-  const availableDates = Object.keys(briefings).sort().reverse(); // newest first
+  const availableDates = Object.keys(briefings).sort().reverse();
 
-  // ===== State =====
-  const state = {
-    date: availableDates[0] || null,
-    country: '__all__',     // '__all__' or country key
-    category: 'all'         // 'all' | '政治' | '経済' | '財政'
-  };
+  const state = { date: availableDates[0] || null, country: '__all__', category: 'all' };
 
-  // ===== Elements =====
-  const $dateSelect = document.getElementById('date-select');
-  const $tabs = document.getElementById('tabs');
-  const $content = document.getElementById('content');
-  const $periodInfo = document.getElementById('period-info');
-  const $footer = document.getElementById('footer-note');
-  const $modal = document.getElementById('modal');
+  const $dateSelect  = document.getElementById('date-select');
+  const $tabs        = document.getElementById('tabs');
+  const $content     = document.getElementById('content');
+  const $periodInfo  = document.getElementById('period-info');
+  const $footer      = document.getElementById('footer-note');
+  const $modal       = document.getElementById('modal');
   const $modalTarget = document.getElementById('modal-target');
-  const $promptText = document.getElementById('prompt-text');
-  const $updateBtn = document.getElementById('update-now-btn');
-  const $copyBtn = document.getElementById('copy-btn');
-  const $closeBtn = document.getElementById('close-modal');
-  const $toast = document.getElementById('toast');
+  const $promptText  = document.getElementById('prompt-text');
+  const $copyBtn     = document.getElementById('copy-btn');
+  const $closeBtn    = document.getElementById('close-modal');
+  const $toast       = document.getElementById('toast');
 
-  // ===== Setup date selector =====
+  // ===== Date selector =====
   function setupDateSelector() {
-    $dateSelect.innerHTML = '';
-    if (availableDates.length === 0) {
-      const opt = document.createElement('option');
-      opt.textContent = 'データなし';
-      $dateSelect.appendChild(opt);
+    if (!availableDates.length) {
+      const o = document.createElement('option');
+      o.textContent = 'データなし';
+      $dateSelect.appendChild(o);
       $dateSelect.disabled = true;
       return;
     }
     availableDates.forEach(d => {
-      const opt = document.createElement('option');
-      opt.value = d;
-      opt.textContent = d + ' (JST)';
-      $dateSelect.appendChild(opt);
+      const o = document.createElement('option');
+      o.value = d; o.textContent = d + ' JST';
+      $dateSelect.appendChild(o);
     });
     $dateSelect.value = state.date;
     $dateSelect.addEventListener('change', e => {
@@ -463,7 +393,7 @@
     });
   }
 
-  // ===== Setup category filter =====
+  // ===== Category filter =====
   document.querySelectorAll('.cat-filter').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.cat-filter').forEach(b => b.classList.remove('active'));
@@ -473,79 +403,81 @@
     });
   });
 
-  // ===== Render tabs =====
+  // ===== Tabs =====
   function renderTabs() {
     $tabs.innerHTML = '';
     const data = briefings[state.date];
     if (!data) return;
 
+    const totalCount = Object.values(data.countries).reduce((a, c) => a + (c.items?.length || 0), 0);
+
     const allBtn = document.createElement('button');
     allBtn.className = 'tab' + (state.country === '__all__' ? ' active' : '');
-    const totalCount = Object.values(data.countries).reduce((a, c) => a + (c.items?.length || 0), 0);
     allBtn.innerHTML = `全件 <span class="count">${totalCount}</span>`;
     allBtn.addEventListener('click', () => { state.country = '__all__'; render(); });
     $tabs.appendChild(allBtn);
 
     Object.keys(data.countries).forEach(key => {
       const c = data.countries[key];
-      const tab = document.createElement('button');
-      tab.className = 'tab' + (state.country === key ? ' active' : '');
-      tab.innerHTML = `${c.label || key} <span class="count">${c.items?.length || 0}</span>`;
-      tab.addEventListener('click', () => { state.country = key; render(); });
-      $tabs.appendChild(tab);
+      const btn = document.createElement('button');
+      btn.className = 'tab' + (state.country === key ? ' active' : '');
+      btn.innerHTML = `${escapeHTML(c.label || key)} <span class="count">${c.items?.length || 0}</span>`;
+      btn.addEventListener('click', () => { state.country = key; render(); });
+      $tabs.appendChild(btn);
     });
 
-    // scroll active tab into view
     const active = $tabs.querySelector('.tab.active');
-    if (active) {
-      active.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-    }
+    if (active) active.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
   }
 
-  // ===== Render content =====
+  // ===== Render helpers =====
   function escapeHTML(s) {
-    return String(s ?? '').replace(/[&<>"']/g, ch => ({
-      '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
-    }[ch]));
+    return String(s ?? '').replace(/[&<>"']/g, ch =>
+      ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[ch]));
   }
+
+  const CONF_LABEL = { high: '確度 高', medium: '確度 中', unknown: '不明' };
 
   function renderCard(item) {
-    const cat = item.category || '';
+    const cat  = item.category || '';
     const conf = item.confidence || 'unknown';
-    const confLabel = { high: '高', medium: '中', unknown: '不明' }[conf] || conf;
-    const sources = (item.sources || []).map(s =>
-      `<a href="${escapeHTML(s.url)}" target="_blank" rel="noopener noreferrer">${escapeHTML(s.label || s.url)}</a>`
-    ).join('');
-    const bg = item.background ? `<div class="card-bg"><span class="card-bg-label">背景・理論:</span>${escapeHTML(item.background)}</div>` : '';
-    const summary = item.summary ? `<div class="card-summary">${escapeHTML(item.summary)}</div>` : '';
+    const sources = (item.sources || [])
+      .filter(s => s.url)
+      .map(s => `<a href="${escapeHTML(s.url)}" target="_blank" rel="noopener noreferrer">${escapeHTML(s.label || s.url)}</a>`)
+      .join('');
+    const bg = item.background
+      ? `<details class="bg-detail"><summary>背景・文脈</summary><div class="card-bg">${escapeHTML(item.background)}</div></details>`
+      : '';
     return `
-      <div class="card confidence-${conf}">
+      <div class="card cat-${escapeHTML(cat)} confidence-${escapeHTML(conf)}">
         <div class="card-head">
           <div class="card-title">${escapeHTML(item.title)}</div>
-          ${cat ? `<span class="badge badge-${cat}">${cat}</span>` : ''}
-          <span class="badge badge-conf ${conf}">確度: ${confLabel}</span>
+          <div class="badges">
+            ${cat ? `<span class="badge badge-${escapeHTML(cat)}">${escapeHTML(cat)}</span>` : ''}
+            <span class="badge badge-conf ${escapeHTML(conf)}">${escapeHTML(CONF_LABEL[conf] || conf)}</span>
+          </div>
         </div>
-        ${summary}
+        ${item.summary ? `<div class="card-summary">${escapeHTML(item.summary)}</div>` : ''}
         ${bg}
         ${sources ? `<div class="card-sources">${sources}</div>` : ''}
-      </div>
-    `;
+      </div>`;
   }
 
   function renderCountry(key, c) {
     const items = (c.items || []).filter(it => state.category === 'all' || it.category === state.category);
-    if (items.length === 0 && state.category !== 'all') return '';
+    if (!items.length && state.category !== 'all') return '';
     const notes = c.notes ? `<div class="country-notes">📝 ${escapeHTML(c.notes)}</div>` : '';
-    const cards = items.length > 0
+    const cards = items.length
       ? items.map(renderCard).join('')
-      : `<div class="card"><div class="card-summary" style="color:var(--text-dim);">該当する記事はありません。</div></div>`;
+      : `<div class="card"><div class="card-summary" style="color:var(--muted)">該当する記事はありません。</div></div>`;
     return `
       <section class="country-section">
-        <h2 class="country-title">${escapeHTML(c.label || key)}</h2>
-        ${notes}
-        ${cards}
-      </section>
-    `;
+        <div class="country-header">
+          <h2 class="country-title">${escapeHTML(c.label || key)}</h2>
+          <span class="country-count">${items.length}件</span>
+        </div>
+        ${notes}${cards}
+      </section>`;
   }
 
   function renderContent() {
@@ -554,73 +486,64 @@
       $content.innerHTML = '<div class="empty-state">この日付のデータはありません。</div>';
       return;
     }
-    $periodInfo.textContent = `カバー期間: ${data.period?.from || ''} 〜 ${data.period?.to || ''} | 生成日時: ${data.generated_at || ''}`;
+    $periodInfo.textContent =
+      `カバー期間: ${data.period?.from || ''} 〜 ${data.period?.to || ''}　生成: ${data.generated_at || ''}`;
     let html = '';
     if (state.country === '__all__') {
-      Object.keys(data.countries).forEach(key => {
-        html += renderCountry(key, data.countries[key]);
-      });
+      Object.keys(data.countries).forEach(k => { html += renderCountry(k, data.countries[k]); });
     } else {
       const c = data.countries[state.country];
       if (c) html = renderCountry(state.country, c);
     }
     $content.innerHTML = html || '<div class="empty-state">このカテゴリに該当する記事はありません。</div>';
-    $footer.innerHTML = `${escapeHTML(data.methodology_notes || '')}<br><em>毎朝5時(JST)にスケジュールタスクが自動でこのアプリにデータを追記します。</em>`;
+    $footer.textContent = data.methodology_notes || '';
   }
 
-  function render() {
-    renderTabs();
-    renderContent();
-  }
+  function render() { renderTabs(); renderContent(); }
 
-  // ===== Update-now modal =====
-  function buildPrompt() {
-    const targetCountry = state.country === '__all__' ? '全17か国・地域' : (briefings[state.date]?.countries?.[state.country]?.label || state.country);
+  // ===== Update modal =====
+  function openModal() {
+    const targetCountry = state.country === '__all__'
+      ? '全17か国・地域'
+      : (briefings[state.date]?.countries?.[state.country]?.label || state.country);
     const targetDate = state.date || '本日(JST)';
+    $modalTarget.textContent = `${targetCountry} / ${targetDate}`;
+    $promptText.value = buildPrompt(targetCountry, targetDate);
+    $modal.classList.add('open');
+  }
+
+  function buildPrompt(targetCountry, targetDate) {
+    const onlyOne = state.country !== '__all__';
     return `海外ニュース・デイリーブリーフィングを「今すぐ」更新してください。
 
 対象日付: ${targetDate} (JST)
 対象国・地域: ${targetCountry}
 
 【収集カテゴリ】
-- 政治: 主要政治動向
-- 経済: 経済指標・産業動向
-- 財政: 財政政策・中央銀行
-- マーケット: 為替（対USD・対JPY両建て）をメインに解説。株式指数・国債利回りは「円相場への影響」という観点で補足。各国1つ目のアイテムは必ずその国通貨の対USD・対JPYレートと前日比を含めること。
+- 政治: 主要政治動向（政権・選挙・外交・政策）
+- 経済: 経済指標・産業動向・企業ニュース
+- 財政: 財政政策・予算・中央銀行・金融政策
+- マーケット: 為替（対USD・対JPY両建て）をメインに解説。株式指数・国債利回りは「円相場への影響」という観点で補足。各国1件目は必ずその国通貨の対USD・対JPYレートと前日比を含めること。
 
 【手順】
-1. ${state.country === '__all__' ? '17か国すべて' : targetCountry + 'のみ'}について、現地メディア中心に政治・経済・財政の最新ニュースを WebSearch で収集してください。
-2. マーケットデータを WebSearch で収集してください:
-   - 各国通貨の対USD・対JPYレートと前日比（EUR/JPY, GBP/JPY, AUD/JPY, USD/CNH, KRW/JPY 等）
-   - 各国主要株式指数の動向（S&P500, DAX, FTSE100, 上海総合, KOSPI 等）
-   - 主要国債利回り（米10年, 独10年, 英10年 等）と円相場への影響
-3. 結果を以下の JSON スキーマでまとめてください（既存データと同形式、category に "マーケット" を追加）:
+1. ${onlyOne ? targetCountry + 'のみ' : '17か国すべて'}について、現地メディア中心に最新ニュースを WebSearch で収集（各国2〜3クエリ）。
+2. マーケットデータを収集: USD/JPY, EUR/JPY, GBP/JPY, AUD/JPY, NZD/JPY, CAD/JPY, CHF/JPY, CNH/JPY, KRW/JPY ほか; 主要株式指数(S&P500, DAX, FTSE100, 上海総合, KOSPI など); 主要国債利回り(米10年, 独10年, 英10年)。
+3. 結果を以下の JSON スキーマでまとめる:
    各アイテム: { "title", "category"("政治"|"経済"|"財政"|"マーケット"), "summary", "background", "sources":[{"label","url"}], "confidence"("high"|"medium"|"unknown") }
-4. newsbriefingapp.html を Edit で開き、<script type="application/json" id="briefing-2026-05-25">
-{"date":"2026-05-25","generated_at":"2026-05-25T05:00:00+09:00","period":{"from":"2026-05-24 00:00 JST","to":"2026-05-25 05:00 JST"},"countries":{"EU":{"label":"EU(欧州連合)","items":[{"title":"EU、米国産工業品の関税全廃で欧州議会と理事会が合意","category":"政治","summary":"EU理事会と欧州議会は、米国産の全工業品に対する関税を撤廃し、一部の米国産農産物・水産物への優遇市場アクセスを与えることで合意した。","background":"対米通商緊張の緩和策として、EU側が関税を引き下げる形。EU・米国のデジタル税摩擦とも連動する交渉の一環。対米輸出(自動車・機械)の報復関税回避を狙った措置。","sources":[{"label":"European Union News","url":"https://european-union.europa.eu/news-and-events_en"}],"confidence":"high"},{"title":"AI法施行加速: 2026年8月2日までに各加盟国でAI規制サンドボックス設置義務化","category":"政治","summary":"EU AI法(世界初の包括的AI規制)の施行が加速。Article 57に基づき全EU加盟国は2026年8月2日までに少なくとも1つの国家AIサンドボックスを設置する義務がある。","background":"2023年に成立したAI法の段階的施行で、ハイリスクAIシステムの規制と同時にスタートアップ育成のための「規制サンドボックス」制度が各国で具体化する段階に入った。","sources":[{"label":"Euronews","url":"https://www.euronews.com/"}],"confidence":"high"},{"title":"EUR/USD: 1.1648 — EUR/JPY: 185.10円 (+0.3%)","category":"マーケット","summary":"ユーロはドルに対して1.1648、円に対して185.10円で推移。EU・米国関税協定合意を受け若干の買い優勢。欧州成長見通し下方修正(1.4%→1.1%)が重石。","background":"ECBの利下げサイクル継続観測と、中東情勢によるエネルギー価格上昇が綱引き状態。2025年との比較ではユーロは対円で高水準を維持している。","sources":[{"label":"Euronews Markets","url":"https://www.euronews.com/"}],"confidence":"medium"}],"notes":""},"イギリス":{"label":"イギリス","items":[{"title":"英国で記録的寒波: スコットランドで5月の最低気温を更新(-6.1°C)","category":"経済","summary":"スコットランドのアルナハーラで-6.1°Cを記録し、英国の5月の最低気温の新記録を樹立。シェトランドでは大雪が降り、季節外れの寒さが農業・エネルギー需要に影響。","background":"気候変動の文脈で逆説的な寒波が欧州北部を覆うことが増えており、エネルギー需要急増と農業への影響が懸念される。","sources":[{"label":"Wikipedia - 2026 in the United Kingdom","url":"https://en.wikipedia.org/wiki/2026_in_the_United_Kingdom"}],"confidence":"high"},{"title":"ロンドンで右翼「Unite the Kingdom」大規模デモ: リフォーム党が地方選で躍進","category":"政治","summary":"トミー・ロビンソン支持者ら数万人がロンドンで「Unite the Kingdom」デモを実施。直前の地方選ではリフォーム党が大幅に議席を増やし、スターマー労働党政権が打撃を受けた。","background":"英国では移民・治安問題を巡りポピュリスト右派が急速に台頭。旧来の保守党支持層を取り込んだリフォーム党の伸長はスターマー政権の政策路線にも影響を与えうる。","sources":[{"label":"CNN - Britain hard right march London","url":"https://www.cnn.com/2026/05/16/uk/britain-hard-right-march-london-tommy-robinson-intl"}],"confidence":"high"},{"title":"GBP/USD: 1.3503 — GBP/JPY: 214.58円 (+0.2%)","category":"マーケット","summary":"ポンドはドルに対して1.3503、円に対して214.58円。英国内の政治的不確実性(リフォーム党台頭)が上値を抑えるも、米英軍事協力合意がポンドをサポート。","background":"英国はブレグジット後の独自通商政策を強化中。米英軍事協力(B-52爆撃機のRAFフェアフォード配備)はドル/ポンドの需給にも影響。","sources":[{"label":"Wikipedia - 2026 in the United Kingdom","url":"https://en.wikipedia.org/wiki/2026_in_the_United_Kingdom"}],"confidence":"medium"}],"notes":""},"スイス":{"label":"スイス","items":[{"title":"ガザ・フロティラ参加のスイス人7人が帰国: イスラエルから釈放","category":"政治","summary":"イスラエルによって拘束されていたガザ・フロティラ参加者7名(スイス国籍)が2026年5月24日に帰国。スイス外務省が仲介し、外交的解決を実現した。","background":"ガザ人道支援を目的とした船団(フロティラ)に参加したスイス市民がイスラエル当局に拘束された事案。中立国スイスの外交的立場が解放交渉で一定の役割を果たしたとみられる。","sources":[{"label":"SWI swissinfo.ch","url":"https://www.swissinfo.ch/eng/latest-news/"}],"confidence":"high"},{"title":"スイス経済、2026年Q1のGDP+0.5%: 関税混乱・原油価格ショックにも底堅さを発揮","category":"経済","summary":"スイスのGDPは2026年第1四半期に前期比+0.5%成長を記録。米国の関税措置や中東情勢による原油価格ショックにもかかわらず、輸出・金融サービスが堅調を維持。","background":"スイスは通貨高(CHF高)と輸出依存のジレンマを抱えつつも、製薬・精密機械・金融の高付加価値産業が底支え。人口上限国民投票が来月に予定されている。","sources":[{"label":"US News - Housing Squeeze in Swiss Boom Region","url":"https://www.usnews.com/news/world/articles/2026-05-22/housing-squeeze-in-swiss-boom-region-fuels-support-for-population-cap"}],"confidence":"high"},{"title":"CHF/JPY: 174.80円 (+0.1%) — スイスフラン安全資産需要で底堅く推移","category":"マーケット","summary":"スイスフランは円に対して約174.80円で推移。中東情勢の緊張緩和の兆しでCHF高に若干の調整も、安全資産需要が下値を支える展開が続いている。","background":"スイスフランは地政学的リスクの高まりで買われる傾向があり、ホルムズ海峡情勢の動向が相場の主要ドライバー。SNBは過度なCHF高を牽制している。","sources":[{"label":"SWI swissinfo.ch","url":"https://www.swissinfo.ch/eng/latest-news/"}],"confidence":"medium"}],"notes":""},"オーストラリア":{"label":"オーストラリア","items":[{"title":"2026年度予算案: 4年間で500億豪ドル増税、住宅供給35,000戸減少の懸念","category":"財政","summary":"オーストラリア2026年度予算は4年間で500億豪ドルの増税を含む。個人所得税150億豪ドル増加のほか、住宅・中小企業・農業・株式への課税強化で住宅供給が35,000戸減少する見通し。","background":"労働党アルバニージー政権の予算は財政健全化と社会支出の両立を目指すが、野党はインフレ再燃と生活水準低下を批判。実質賃金は前年比-3%で先進国最大の落ち込み。","sources":[{"label":"Sarah Henderson MP - Matter of public importance","url":"https://sarahhenderson.com.au/matter-of-public-importance-13-may-2026/"}],"confidence":"high"},{"title":"国防予算削減に批判集中: 危険な戦略環境下での防衛力低下を懸念","category":"政治","summary":"労働党政権による国防支出削減計画に対し、野党や安全保障専門家から批判。インド太平洋の安全保障環境悪化(台湾海峡・南シナ海)の中で防衛力強化が急務との認識と乖離している。","background":"AUKUSパートナーシップによる原子力潜水艦取得計画を推進しながら通常国防予算を削減する矛盾を指摘する声が大きい。","sources":[{"label":"Sarah Henderson MP","url":"https://sarahhenderson.com.au/matter-of-public-importance-13-may-2026/"}],"confidence":"high"},{"title":"AUD/USD: 0.6402 — AUD/JPY: 101.73円 (-0.2%)","category":"マーケット","summary":"豪ドルはドルに対して0.6402、円に対して101.73円で推移。予算案の増税方針と実質賃金マイナスを受け、RBAの利下げ観測が強まりAUD売り圧力が継続。","background":"豪州の対中輸出依存度が高く、中国経済の回復ペース(Q1 GDP5.0%成長も消費低迷)が豪ドルの方向性を左右する。RBAの次回政策決定会合に注目が集まる。","sources":[{"label":"Sarah Henderson MP","url":"https://sarahhenderson.com.au/matter-of-public-importance-13-may-2026/"}],"confidence":"medium"}],"notes":""},"ニュージーランド":{"label":"ニュージーランド","items":[{"title":"NZ・インドFTA署名: 輸出の95%の関税撤廃、インド締結FTAの中で最高水準","category":"経済","summary":"ニュージーランドとインドが自由貿易協定(FTA)に署名。NZの対印輸出の95%の関税が撤廃・引き下げられ、インドが締結したFTAの中で最も高い市場アクセスを提供する内容。","background":"インドは関税撤廃に消極的なことで知られるため、95%という水準はNZにとって大きな外交成果。酪農品・羊肉・果物などが主な恩恵を受ける見通し。","sources":[{"label":"NZ Herald Morning Headlines May 24 2026","url":"https://www.nzherald.co.nz/nz/nz-herald-morning-headlines-sunday-may-24-2026/4WUBJBCKT4JFJK3BH5FUHPAYVU/"}],"confidence":"high"},{"title":"NZ政府、ドローン・艦隊整備に16億NZドル投資: 海洋安全保障を強化","category":"政治","summary":"NZ政府は南西太平洋および南極海での海洋安全保障強化のため、16億NZドル(約9.36億米ドル)を投資。長距離偵察ドローン2種類と艦艇整備を計画。","background":"太平洋での中国の影響力拡大と海洋権益問題を背景に、NZが防衛力強化を加速。オーストラリア・米国とのファイブアイズ協力の一環とも位置付けられる。","sources":[{"label":"Bloomberg - New Zealand drones fleet maritime routes","url":"https://www.bloomberg.com/news/articles/2026-05-23/new-zealand-to-invest-in-drones-fleet-to-shield-maritime-routes"}],"confidence":"high"},{"title":"NZD/USD: 0.5898 — NZD/JPY: 93.69円 (-0.1%)","category":"マーケット","summary":"NZドルはドルに対して0.5898、円に対して93.69円で推移。NZ・インドFTA署名が好材料も、RBNZの利下げサイクル継続観測が上値を抑制。","background":"NZは乳製品・農産物輸出への依存度が高く、中国・インドへの輸出需要が通貨の主要ドライバー。インドとのFTA締結は長期的にNZD支持要因となる可能性がある。","sources":[{"label":"NZ Herald","url":"https://www.nzherald.co.nz/latest-news/"}],"confidence":"medium"}],"notes":""},"カナダ":{"label":"カナダ","items":[{"title":"イランとの戦争による原油高が押し上げ: カナダ4月インフレ率2.8%に上昇","category":"経済","summary":"カナダ統計局によると2026年4月の年間インフレ率は2.8%に上昇。イランとの紛争に起因するガソリン価格上昇が主因。中央銀行の利下げ余地が縮小する可能性がある。","background":"中東情勢(ホルムズ海峡の緊張)がエネルギー価格を通じてカナダ経済に波及。カナダは産油国でもあるため、原油高は輸出収益増とインフレ押し上げの両面がある。","sources":[{"label":"Prime Minister of Canada - Monday May 25 2026","url":"https://www.pm.gc.ca/en/news/media-advisories/2026/05/24/monday-may-25-2026"}],"confidence":"high"},{"title":"F1カナダGP: メルセデスのKimi Antolliniが優勝、36万人が観戦","category":"経済","summary":"5月24日のF1カナダGP(モントリオール)でメルセデスのKimi Antolliniがトップフィニッシュ。約36万人のファンが観戦し、FIFAワールドカップ2026への期待感とともに経済的な盛り上がりをけん引。","background":"カナダはFIFAワールドカップ2026の共同開催国(米国・メキシコとともに)。F1カナダGPも重要な経済イベントとして観光・消費に貢献している。","sources":[{"label":"Prime Minister of Canada - Sunday May 24 2026","url":"https://www.pm.gc.ca/en/news/media-advisories/2026/05/23/sunday-may-24-2026"}],"confidence":"high"},{"title":"CAD/USD: 0.7303 — CAD/JPY: 116.03円 (±0.0%)","category":"マーケット","summary":"カナダドルはドルに対して0.7303、円に対して116.03円で横ばい。インフレ加速と原油高のバランスで方向感が定まらない展開。BoCの次回政策決定に注目。","background":"カナダ銀行(BoC)はインフレと景気の板挟みで難しい政策判断を迫られている。W杯共催による観光収入増加がCAD中期的支持材料になる可能性もある。","sources":[{"label":"Prime Minister of Canada","url":"https://www.pm.gc.ca/en/news/media-advisories/2026/05/24/monday-may-25-2026"}],"confidence":"medium"}],"notes":""},"中国":{"label":"中国","items":[{"title":"習近平・トランプ首脳会談(北京): 米中関係の新ビジョン合意、3年間の戦略的安定を確認","category":"政治","summary":"5月14日、北京の人民大会堂でトランプ大統領(9年ぶりの訪中)と習近平主席が会談。両首脳は「建設的な米中関係の新ビジョン」として戦略的安定化で合意。ティム・クック(Apple)、ジェンセン・ファン(Nvidia)、イーロン・マスク(Tesla)らが同行。","background":"米中貿易戦争・技術デカップリングの緊張が続く中での訪中。台湾・南シナ海問題は棚上げされ、AI・半導体・エネルギーでの実務的関係維持が優先された格好。","sources":[{"label":"Ministry of Foreign Affairs of the People's Republic of China","url":"https://www.fmprc.gov.cn/eng/xw/zyxw/202605/t20260514_11910330.html"}],"confidence":"high"},{"title":"中国Q1 2026 GDP5.0%成長: AI向け半導体輸入が1四半期で過去最高の1,350億ドル","category":"経済","summary":"中国の2026年Q1 GDPは前年同期比5.0%成長を記録。一方、AI向け演算需要急増により半導体輸入が1四半期で1,350億ドル(過去最高)に達し、貿易黒字が縮小。消費・不動産の低迷が続く。","background":"中国当局は5%前後の成長目標を堅持しているが、データの信頼性への懸念もある。AI・半導体投資の急増はファーウェイ等による国産化努力と並行している。","sources":[{"label":"US-China Economic and Security Review Commission","url":"https://www.uscc.gov/trade-bulletins/china-bulletin-may-5-2026"}],"confidence":"high"},{"title":"CNH/JPY: 21.89円 (-0.1%) — 人民元、米中首脳会談後も小幅軟調","category":"マーケット","summary":"人民元(オフショア)は円に対して1人民元=21.89円で推移。米中首脳会談合意を受けたリスクオン地合いも、中国消費の低迷と半導体輸入急増による貿易黒字縮小が重石。","background":"人民元相場は当局の管理下にあるが、オフショア(CNH)は市場の実勢を反映。米中関係の改善は人民元高方向に働くが、消費低迷・不動産問題が上値を抑えている。","sources":[{"label":"South China Morning Post - China","url":"https://www.scmp.com/news/china"}],"confidence":"medium"}],"notes":""},"韓国":{"label":"韓国","items":[{"title":"サムスン電子: 約4.8万人がストライキ計画、年間利益の15%をボーナスに要求","category":"経済","summary":"サムスン電子労働組合は4.8万人以上の労働者による18日間のストライキを発表。ボーナス上限(年収50%)の撤廃と営業利益の15%相当をボーナスとして配分することを要求。韓国銀行はストが経済成長を0.5%ポイント押し下げると試算。","background":"サムスン電子は半導体(HBM・ロジック)でTSMC・SKハイニックスとの競争が激化する中での内部労使対立。ストによるウェハー生産停止は世界の半導体サプライチェーンにも波及しうる。","sources":[{"label":"Al Jazeera - Samsung workers strike South Korea","url":"https://www.aljazeera.com/news/2026/5/20/why-are-nearly-50000-samsung-workers-about-to-strike-in-south-korea"}],"confidence":"high"},{"title":"韓国・統一省、北朝鮮との「共存」優先の政策議論を拡大","category":"政治","summary":"韓国統一省は、統一よりも北朝鮮との共存を優先する政策についての公的議論を拡大する方針を示した。従来の「統一」政策からの路線転換を示唆する動きとして注目される。","background":"北朝鮮がロシアへの軍事支援を拡大する中、韓国内では現実的な対北政策への転換を求める声が高まっている。NATO東翼強化に伴う欧州の議論とも連動する地政学的変化。","sources":[{"label":"AEI - Korean Peninsula Update May 2026","url":"https://www.aei.org/articles/korean-peninsula-update-may-5-2026/"}],"confidence":"high"},{"title":"KRW/JPY: 0.1161円 (-0.3%) — サムスンスト懸念でウォン軟調","category":"マーケット","summary":"韓国ウォンは円に対して1ウォン=0.1161円で推移。サムスン電子の大規模ストライキ計画が韓国経済成長への懸念を高め、ウォン売り圧力が続いている。","background":"韓国ウォンは輸出主導経済を反映して半導体・自動車の輸出動向と連動しやすい。サムスンのスト長期化は輸出指標の悪化を通じてウォン安に働く可能性がある。","sources":[{"label":"Al Jazeera - Samsung workers","url":"https://www.aljazeera.com/news/2026/5/20/why-are-nearly-50000-samsung-workers-about-to-strike-in-south-korea"}],"confidence":"medium"}],"notes":""},"台湾":{"label":"台湾","items":[{"title":"トランプ、台湾への武器売却を「対中交渉チップ」と示唆: 独立に対しても警告","category":"政治","summary":"トランプ大統領は米中首脳会談(5月13〜15日)で、台湾への武器売却が「交渉チップ」になりうると発言。同時に台湾に対し独立を求めないよう警告した。台湾の安全保障を巡る不確実性が高まっている。","background":"台湾は米中首脳会談の主要議題の一つ。台湾有事への米国の関与が曖昧なままになっている中、台湾内では自衛意識が高まり民間人の防衛訓練参加が急増している。","sources":[{"label":"AEI - China Taiwan Update May 22 2026","url":"https://www.aei.org/articles/china-taiwan-update-may-22-2026/"}],"confidence":"high"},{"title":"台湾住民が自衛訓練に殺到: 中国軍事圧力増大を背景に民間防衛意識が急上昇","category":"政治","summary":"台湾の民間人が自衛コースへの参加を急増させている。中国によるウクライナ型の軍事行動への懸念が高まる中、市民レベルの防衛意識が急速に高まっている。","background":"台湾軍は兵役延長・民間防衛の強化を進めているが、民間人の自発的な訓練参加はウクライナ侵攻以降に顕著に増加した。台湾海峡の緊張に合わせてその勢いが加速。","sources":[{"label":"AEI - China Taiwan Update May 15 2026","url":"https://www.aei.org/articles/china-taiwan-update-may-15-2026/"}],"confidence":"high"},{"title":"TWD/JPY: 4.92円 (+0.1%) — 台湾ドル、半導体輸出好調で底堅い","category":"マーケット","summary":"台湾ドルは円に対して1台湾ドル=4.92円で小幅上昇。TSMCを中心とした半導体輸出の好調が通貨を支える一方、米中会談での台湾問題の不確実性が上値を抑制。","background":"台湾ドルはTSMCの受注動向と連動しやすい。AIブームによる先端半導体需要の旺盛さがTWD支持要因だが、地政学リスクは常に下押し材料として意識される。","sources":[{"label":"AEI - China Taiwan Update","url":"https://www.aei.org/articles/china-taiwan-update-may-22-2026/"}],"confidence":"medium"}],"notes":""},"フィリピン":{"label":"フィリピン","items":[{"title":"フィリピン上院でデラ・ロサ議員逮捕中に銃撃発生: ICCの逮捕状執行をめぐり政治的混乱","category":"政治","summary":"2026年5月13日、フィリピン上院でロナルド・デラ・ロサ元警察長官(上院議員)の逮捕を試みた際に銃声が響いた。NBI捜査官が議場に立ち入ったことで警護員が警告射撃。デラ・ロサへのICCの逮捕状執行が5月21日に司法省より命じられた。","background":"デラ・ロサはドゥテルテ政権下の麻薬撲滅作戦(数千人が死亡)の主導者として、ICC(国際刑事裁判所)から戦争犯罪の疑いで逮捕状が出ている。マルコス政権とドゥテルテ陣営の対立が背景にある。","sources":[{"label":"NPR - Gunfire breaks out in Philippine Senate","url":"https://www.npr.org/2026/05/13/g-s1-121827/gunfire-breaks-out-in-philippine-senate-as-police-try-to-arrest-senator"}],"confidence":"high"},{"title":"フィリピン上院本会議が継続: デラ・ロサ問題の法的・政治的手続きが進行中","category":"政治","summary":"フィリピン上院本会議が5月25日も継続。デラ・ロサ問題に関連した法的・政治的手続きが進行中であり、政治的緊張が続いている。","background":"フィリピンの上院は政治的な主要戦場となっており、マルコス政権による旧ドゥテルテ派への法的攻勢が続いている。ICCによる逮捕状執行は司法的に重要な前例となる。","sources":[{"label":"Wikipedia - 2026 Philippine Senate lockdown","url":"https://en.wikipedia.org/wiki/2026_Philippine_Senate_lockdown"}],"confidence":"high"},{"title":"PHP/JPY: 2.79円 (+0.2%) — フィリピンペソ、政治的混乱にも底堅く推移","category":"マーケット","summary":"フィリピンペソは円に対して1ペソ=2.79円で小幅上昇。上院での政治的混乱にもかかわらず、海外労働者送金(OFW)の堅調さと観光業回復がペソを支えている。","background":"フィリピン経済はOFW送金と観光・BPO(ビジネスプロセスアウトソーシング)が柱。政治的リスクはペソ相場への直接的影響は限定的で、BSP(中央銀行)の金融政策が主要ドライバー。","sources":[{"label":"Philippine News Agency","url":"https://www.pna.gov.ph/"}],"confidence":"medium"}],"notes":""},"インド":{"label":"インド","items":[{"title":"第3回インド・北欧サミット2026開催: インドの多極外交を強化","category":"政治","summary":"2026年5月20日頃、第3回インド・北欧サミットが開催。インドは北欧5か国との技術・再生可能エネルギー・海洋安全保障分野での協力を深化。インドの戦略的自律路線の一環。","background":"インドはクワッド(日米豪印)、BRICS、北欧諸国など多方向で外交を展開。NZとのFTA締結も含め、インドは通商外交でも積極姿勢を示している。","sources":[{"label":"UPSC Current Affairs - The Hindu Analysis May 23 2026","url":"https://www.youtube.com/watch?v=jLNm_RmoCls"}],"confidence":"medium"},{"title":"印パ停戦1年: 緊張は続くも武力衝突は回避 — 「表向き平和な同居」","category":"政治","summary":"2025年5月のインド・パキスタン軍事衝突(オペレーション・シンドール)から1年。停戦は維持されているが、ワシントンポストは両国関係を「かつて家具を投げ合った同居人の平和」と表現。再燃リスクは依然として存在する。","background":"2025年のパフルガーム攻撃(民間人26人死亡)をきっかけにインドがミサイル攻撃を実施、4日間の軍事衝突後に米国の仲介でDGMO間の停戦に合意。核保有国同士の緊張はゼロとは言えない状態が続く。","sources":[{"label":"Washington Post - India Pakistan ceasefire one year later","url":"https://www.washingtonpost.com/opinions/2026/05/05/year-later-india-pakistan-ceasefire-is-holding-so-far/"}],"confidence":"high"},{"title":"INR/JPY: 1.906円 (+0.1%) — インドルピー、外交活発化で緩やかに上昇","category":"マーケット","summary":"インドルピーは円に対して1ルピー=1.906円で小幅上昇。NZとのFTA署名や北欧サミット等の外交活発化がインドへの投資家信頼感を高め、ルピーを支援。","background":"インドはNIFTY50が高水準を維持し、外国資本流入が活発。RBI(インド準備銀行)はインフレ管理と成長支援のバランスを取りながら政策を運営している。","sources":[{"label":"Wikipedia - 2025 India-Pakistan conflict","url":"https://en.wikipedia.org/wiki/2025_India%E2%80%93Pakistan_conflict"}],"confidence":"medium"}],"notes":""},"タイ":{"label":"タイ","items":[{"title":"タイ、93カ国のビザなし滞在を60日から30日に短縮: 不法就労・犯罪対策","category":"政治","summary":"タイは不法就労・犯罪を理由として、米国・英国・豪州を含む93カ国のビザなし滞在を60日から30日に短縮。国家安全保障を理由に外務省が決定。観光業への影響が懸念される。","background":"タイ観光業は2026年1〜5月の外国人観光客数が前年同期比3.31%減と低迷。中東紛争による高エネルギー価格と世界経済減速が追い打ちをかけており、33百万人の年間目標の下方修正も検討されている。","sources":[{"label":"CNN - Thailand visa free cut","url":"https://www.cnn.com/2026/05/20/travel/thailand-visa-free-cut-intl-hnk"}],"confidence":"high"},{"title":"タイで新恐竜種「ナガタイタン」を発見: 重さ推定27トン、東南アジア最大","category":"経済","summary":"タイで新種の恐竜「Nagatitan chaiyaphumensis(ナガタイタン)」が同定された。推定体重27トン、体長27メートルで東南アジア最大の恐竜。学術的・観光的な注目を集めている。","background":"タイ北東部チャイヤプームは白亜紀の化石産地として知られており、今回の発見はタイの古生物学的重要性を改めて示した。自然観光資源として活用される可能性がある。","sources":[{"label":"CNN - Titan new dinosaur discovered Thailand","url":"https://www.cnn.com/2026/05/15/science/titan-new-dinosaur-discovered-thailand-intl-scli"}],"confidence":"high"},{"title":"THB/JPY: 4.653円 (+0.1%) — タイバーツ、ビザ制限発表後も安定","category":"マーケット","summary":"タイバーツは円に対して1バーツ=4.653円で小幅上昇。ビザなし滞在短縮による観光収入減少懸念はあるが、中央銀行(BOT)の安定的な政策運営がバーツを支えている。","background":"タイ経済は輸出・観光・農業のバランスが取れており、バーツはアジア通貨の中では比較的安定した動きをしている。中東情勢によるエネルギー価格が輸入コストに影響。","sources":[{"label":"Al Jazeera - Thailand slash tourist visa free stays","url":"https://www.aljazeera.com/news/2026/5/19/thailand-to-slash-tourist-visa-free-stays"}],"confidence":"medium"}],"notes":""},"シンガポール":{"label":"シンガポール","items":[{"title":"PM ローレンス・ウォン、中東危機の長期化を警告: ホルムズ再開後も危機は続く","category":"政治","summary":"シンガポールのローレンス・ウォン首相は5月1日のメーデー演説で、中東危機がホルムズ海峡の再開後も終わらない可能性があると警告。シンガポールの輸出依存型経済への影響に備えるよう呼びかけた。","background":"シンガポールはアジア最大の貿易港を持つ都市国家として、中東エネルギー供給ルートの混乱に対して極めて脆弱。ウォン首相は就任後の経済安全保障強化に注力している。","sources":[{"label":"Mothership.SG","url":"https://mothership.sg/"}],"confidence":"high"},{"title":"シンガポール人2人がMV Hondiusでアンデスハンタウイルスに暴露: 公衆衛生措置発動","category":"経済","summary":"クルーズ船MV Hondiusでのアンデスハンタウイルス集団感染を受け、乗船していたシンガポール人2人をNCID(国立感染症センター)で隔離・検査。公衆衛生当局が水際対策を発動。","background":"アンデスハンタウイルスは南米ネズミ由来のウイルスで、人から人への感染も報告されている。クルーズ船での集団感染は国際的な公衆衛生上の懸念事項。","sources":[{"label":"Communicable Diseases Agency Singapore","url":"https://www.cda.gov.sg/news-and-events/public-health-measures-activated-for-two-singapore-residents-onboard-mv-hondius/"}],"confidence":"high"},{"title":"SGD/JPY: 119.17円 (+0.2%) — シンガポールドル、貿易環境改善期待で上昇","category":"マーケット","summary":"シンガポールドルは円に対して1SGD=119.17円で上昇。ホルムズ海峡の緊張緩和の兆しを背景に、貿易依存型のシンガポール経済への好感がSGD高を支援。","background":"MAS(シンガポール金融管理局)はSGERを通じた通貨バスケット政策で為替安定を図っている。中東情勢・米中関係改善が輸出とSGD相場の追い風になっている。","sources":[{"label":"Mothership.SG","url":"https://mothership.sg/"}],"confidence":"medium"}],"notes":""},"メキシコ":{"label":"メキシコ","items":[{"title":"W杯2026開幕(6月11日)に向け空港改修を急ピッチ: 2,000人の作業員が24時間稼働","category":"経済","summary":"メキシコシティ国際空港は6月11日のFIFAワールドカップ2026開幕に向けて1年越しの改修工事を急ピッチで進めており、2,000人の作業員が24時間体制で従事している。","background":"メキシコはアメリカ・カナダとともにFIFAワールドカップ2026の共同開催国。経済的波及効果は数十億ドルに上ると見られており、観光・消費の大幅増加が期待されている。","sources":[{"label":"Mexico News Daily","url":"https://mexiconewsdaily.com/"}],"confidence":"high"},{"title":"シェインバウム大統領がフラッキング禁止公約を撤回: 抗議デモが発生","category":"政治","summary":"クラウディア・シェインバウム大統領が選挙公約のフラッキング(水圧破砕法)禁止を撤回。エネルギー確保を優先したとみられるが、メキシコシティで抗議デモが発生し環境団体が反発。","background":"メキシコはPEMEX(国営石油会社)の生産減退が深刻で、エネルギー自立のためにフラッキング導入を迫られている面がある。気候公約との矛盾が政権の信頼性に影響。","sources":[{"label":"Mexico News Daily","url":"https://mexiconewsdaily.com/"}],"confidence":"high"},{"title":"MXN/JPY: 8.11円 (+0.3%) — メキシコペソ、W杯景気期待で上昇","category":"マーケット","summary":"メキシコペソは円に対して1ペソ=8.11円で上昇。FIFAワールドカップ2026の経済効果への期待と、バンコ・デ・メヒコ(中銀)の安定した政策運営がペソを支えている。","background":"メキシコペソは高金利(バンコ・デ・メヒコの政策金利が高水準)を背景にキャリートレードの対象にもなっている。W杯開催による外貨収入増加もペソ支持材料。","sources":[{"label":"Mexico News Daily","url":"https://mexiconewsdaily.com/"}],"confidence":"medium"}],"notes":""},"南アフリカ":{"label":"南アフリカ","items":[{"title":"ムーディーズ、南アフリカの見通しを「安定的」から「ポジティブ」に格上げ","category":"財政","summary":"ムーディーズは南アフリカの経済見通しを「安定的」から「ポジティブ」に引き上げた。国家対話の推進やラマポーザ政権の改革姿勢を評価した形で、投資家の信頼回復につながる。","background":"南アフリカはESKOM(電力公社)の電力不足問題や高失業率が課題だったが、構造改革の進展とANC・DA連立政権の安定により信用見通しが改善。格上げは国債コスト低下につながる可能性がある。","sources":[{"label":"The South African","url":"https://www.thesouthafrican.com/news/"}],"confidence":"high"},{"title":"議会がラマポーザ大統領の「ファームゲートスキャンダル」弾劾調査委員会を設置","category":"政治","summary":"南ア議会は、ラマポーザ大統領のファームゲートスキャンダル(2020年のプハラファーム農場での外貨400万ドル窃盗隠蔽疑惑)を巡り弾劾調査委員会を設置することを決定。","background":"ファームゲートスキャンダルはラマポーザ政権の政治的弱点。ムーディーズの見通し改善という好材料と、弾劾調査という政治リスクが並存しており、南ア市場は神経質な動きが予想される。","sources":[{"label":"Al Jazeera - South Africa presidential impeachment probe Farmgate","url":"https://www.aljazeera.com/news/2026/5/11/south-africa-plans-presidential-impeachment-probe-over-farmgate-scandal"}],"confidence":"high"},{"title":"ZAR/JPY: 8.73円 (+0.5%) — ランド、ムーディーズ格上げで大幅上昇","category":"マーケット","summary":"南アフリカランドは円に対して1ランド=8.73円で大幅上昇。ムーディーズの見通し「ポジティブ」格上げを受けて、投資家のランド買いが優勢。弾劾スキャンダルの政治リスクは下押し材料として意識される。","background":"南アフリカランドは新興国通貨の中でもボラティリティが高く、格付け動向・資源価格(金・プラチナ)・中国需要に敏感に反応する。","sources":[{"label":"Al Jazeera - Why anti-migrant attacks increasing South Africa","url":"https://www.aljazeera.com/news/2026/5/23/why-are-anti-migrant-attacks-increasing-in-south-africa"}],"confidence":"medium"}],"notes":""},"ハンガリー":{"label":"ハンガリー","items":[{"title":"ハンガリー新政権(マジャール首相): オルバン時代の措置を解体開始、EU回帰路線へ","category":"政治","summary":"ペーテル・マジャール新首相は旧オルバン政権が設置した障壁・規制の撤廃を開始。ウクライナへの二重国籍承認を歓迎し、EU・NATO路線への回帰を示す一連の政策変更を進めている。","background":"2026年4月のハンガリー選挙でマジャール率いる野党が勝利し、10年以上続いたオルバン政権が幕を閉じた。EU・ハンガリー関係の修復が急速に進んでいる。","sources":[{"label":"Daily News Hungary - Top Hungary news May 23 2026","url":"https://dailynewshungary.com/top-hungary-news-23-may-2026/"}],"confidence":"high"},{"title":"ハンガリー・MOL製油所で爆発事故: 1人死亡、複数が重傷","category":"経済","summary":"ハンガリーのMOL製油所で爆発事故が発生し、1人が死亡、数人が重傷を負った。事故の原因は調査中で、製油所の操業に影響が出ており、国内の燃料供給への影響が注視される。","background":"ハンガリーはロシア産原油への依存度が高く、MOLはその主要処理拠点。新政権下でのエネルギー政策転換とも重なる時期の事故として注目されている。","sources":[{"label":"Daily News Hungary - Top Hungary news May 22 2026","url":"https://dailynewshungary.com/top-hungary-news-22-may-2026/"}],"confidence":"high"},{"title":"HUF/JPY: 0.4327円 (+0.4%) — フォリント、マジャール新政権のEU回帰で上昇","category":"マーケット","summary":"ハンガリーフォリントは円に対して1フォリント=0.4327円で上昇。マジャール新政権によるEU・NATO回帰方針が投資家のフォリント買いを促している。EU凍結資金の解放期待も上昇材料。","background":"旧オルバン政権時代、EUはハンガリーの法の支配問題を理由にEU資金を凍結していた。マジャール新政権でこれが解除されれば、フォリントと国内経済への大きなプラス材料となる。","sources":[{"label":"Daily News Hungary","url":"https://dailynewshungary.com/top-hungary-news-23-may-2026/"}],"confidence":"medium"}],"notes":""},"ポーランド":{"label":"ポーランド","items":[{"title":"トランプ、ポーランドへの米軍5,000人追加派遣を表明: NATO東翼の不確実性が再浮上","category":"政治","summary":"トランプ大統領はポーランドへの米軍5,000人の追加派遣を発表。ナウロツキ大統領との「友好関係」を理由に挙げ、欧州へのNATOコミットメントに関する混乱が再び表面化した。ポーランドのシコルスキ外相は歓迎の意を表明。","background":"トランプ政権は欧州への関与を巡り揺れ動いており、数日前には派遣中止の観測もあった。ポーランドはウクライナ支援の最前線国家として米軍駐留の重要性を強調し続けている。","sources":[{"label":"Al Jazeera - US deepens European uncertainty with deployment of 5000 troops to Poland","url":"https://www.aljazeera.com/news/2026/5/22/us-deepens-european-uncertainty-with-deployment-of-5000-troops-to-poland"}],"confidence":"high"},{"title":"ポーランドにF-35ステルス戦闘機3機が到着: NATO東翼初の第5世代機","category":"政治","summary":"ポーランドが発注した32機のF-35Aうち最初の3機がワシャク空軍基地に到着。2026年末までに計14機が配備予定で、全32機の完全配備は2032年の見通し。コシニャク=カミシュ国防相は「NATO東翼初の第5世代戦闘機」と位置づけた。","background":"ポーランドは対GDP比4%以上の国防支出を維持しており、NATO加盟国の中で突出した防衛投資国。ウクライナ戦争を受けたロシアへの抑止力強化の一環として32機のF-35を発注していた。","sources":[{"label":"Notes From Poland - First of Poland's F-35 stealth fighters arrive from US","url":"https://notesfrompoland.com/2026/05/22/first-of-polands-f-35-stealth-fighters-arrive-from-us/"}],"confidence":"high"},{"title":"PLN/JPY: 39.72円 (+0.6%) — ポーランドズウォティ、防衛力強化と対EU関係改善で上昇","category":"マーケット","summary":"ポーランドズウォティは円に対して1PLN=39.72円で上昇。米軍派遣継続とF-35配備による安全保障の向上が投資家信頼感を高め、ズウォティ高を支援。","background":"ポーランドはEU加盟国の中でも経済成長が旺盛で、2026年のGDP成長率は3.5%前後が見込まれている。防衛産業投資の活発化が製造業・輸出に波及する可能性がある。","sources":[{"label":"CNN - Trump Poland troops NATO","url":"https://www.cnn.com/2026/05/22/politics/trump-poland-troops-nato-ukraine-hnk"}],"confidence":"medium"}],"notes":""}},"market_summary":{"forex":{"USD_JPY":{"rate":158.89,"change_pct":-0.1},"EUR_JPY":{"rate":185.1,"change_pct":0.3},"GBP_JPY":{"rate":214.58,"change_pct":0.2},"AUD_JPY":{"rate":101.73,"change_pct":-0.2},"NZD_JPY":{"rate":93.69,"change_pct":-0.1},"CAD_JPY":{"rate":116.03,"change_pct":0.0},"CHF_JPY":{"rate":174.8,"change_pct":0.1},"CNH_JPY":{"rate":21.89,"change_pct":-0.1},"KRW_JPY":{"rate":0.1161,"change_pct":-0.3},"TWD_JPY":{"rate":4.92,"change_pct":0.1},"SGD_JPY":{"rate":119.17,"change_pct":0.2},"INR_JPY":{"rate":1.906,"change_pct":0.1},"THB_JPY":{"rate":4.653,"change_pct":0.1},"MXN_JPY":{"rate":8.11,"change_pct":0.3},"ZAR_JPY":{"rate":8.73,"change_pct":0.5}},"equity_indices":{"SP500":{"value":5892,"change_pct":0.4,"note":"8週連続上昇"},"DAX":{"value":24093,"change_pct":0.49},"FTSE100":{"value":8541,"change_pct":0.3},"Shanghai":{"value":4113,"change_pct":0.87,"note":"週間では-0.54%"},"KOSPI":{"value":3251,"change_pct":-0.2},"ASX200":{"value":8382,"change_pct":0.2},"TSX":{"value":25120,"change_pct":0.3},"NIFTY50":{"value":26780,"change_pct":0.4}},"bond_yields":{"US10Y":{"yield_pct":4.6,"note":"1年ぶり高水準"},"DE10Y":{"yield_pct":3.05,"note":"中東和平進展期待で低下"},"GB10Y":{"yield_pct":4.45,"note":"概算値"}}},"methodology_notes":"2026-05-24 00:00 JSTから2026-05-25 05:00 JSTの期間のデータをWebSearchにより収集。各国2〜3クエリを実施し、信頼性の高いニュースソース(通信社・公式機関・主要メディア)から情報を取得。URLは検索結果で実際に確認できたもののみ使用。為替レートはUSD/JPY=158.89、EUR/JPY=185.10、GBP/JPY=214.58のみ検索結果で確認。その他は公表クロスレートを基に推計(confidence: medium)。株式指数・国債利回りは複数ソースから収集した最新データを使用。"}
-</script>
-<!-- ========== DATA BLOCKS END ========== --> の直前に、新しい <script type="application/json" id="briefing-${targetDate}">…JSON…</script> ブロックを追記してください(既に同日付のブロックがあれば、その JSON を新しいものに置き換えてください)。
-5. 終わったら newsbriefingapp.html を提示してください。`;
+4. newsbriefingapp.html の <!-- ========== DATA BLOCKS END ========== --> の直前に、
+   <script type="application/json" id="briefing-${targetDate}">…JSON…<\/script>
+   を追記（同日付のブロックがあれば置き換え）。
+5. 完了後に newsbriefingapp.html を提示してください。`;
   }
 
-  $updateBtn.addEventListener('click', () => {
-    const targetLabel = state.country === '__all__' ? '全件 / ' + (state.date || '本日') : `${briefings[state.date]?.countries?.[state.country]?.label || state.country} / ${state.date}`;
-    $modalTarget.textContent = targetLabel;
-    $promptText.value = buildPrompt();
-    $modal.classList.add('open');
-  });
-
+  document.getElementById('update-now-btn').addEventListener('click', openModal);
+  document.getElementById('update-now-btn-2').addEventListener('click', openModal);
   $closeBtn.addEventListener('click', () => $modal.classList.remove('open'));
   $modal.addEventListener('click', e => { if (e.target === $modal) $modal.classList.remove('open'); });
 
   $copyBtn.addEventListener('click', async () => {
-    const text = $promptText.value;
-    try {
-      await navigator.clipboard.writeText(text);
-    } catch (e) {
-      $promptText.select();
-      document.execCommand('copy');
-    }
+    try { await navigator.clipboard.writeText($promptText.value); }
+    catch { $promptText.select(); document.execCommand('copy'); }
     $toast.classList.add('show');
     setTimeout(() => $toast.classList.remove('show'), 1800);
   });
