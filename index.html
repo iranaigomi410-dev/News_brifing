@@ -104,13 +104,26 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);
   transition:all .15s;text-align:left;
 }
 .tab:hover{background:var(--panel);color:var(--text)}
-.tab.active{background:rgba(91,155,255,.1);color:var(--accent);border-color:rgba(91,155,255,.25);font-weight:700}
+.tab.selected{background:rgba(91,155,255,.1);color:var(--accent);border-color:rgba(91,155,255,.25);font-weight:700}
 .tab .tab-cur{font-size:10px;opacity:.55;margin-left:3px}
 .tab .count{
   font-size:10px;padding:1px 6px;border-radius:999px;
   background:var(--panel2);color:var(--muted);flex-shrink:0;margin-left:6px;
 }
-.tab.active .count{background:rgba(91,155,255,.15);color:var(--accent)}
+.tab.selected .count{background:rgba(91,155,255,.15);color:var(--accent)}
+
+/* Country multi-select action bar */
+.tab-actions{
+  display:flex;align-items:center;gap:4px;
+  padding:6px 6px 10px;flex-shrink:0;
+}
+.tab-action-btn{
+  font-size:10px;padding:2px 9px;border-radius:5px;
+  border:1px solid var(--border);background:var(--panel2);
+  color:var(--dim);cursor:pointer;font-family:inherit;transition:all .15s;
+}
+.tab-action-btn:hover{color:var(--text);border-color:var(--dim)}
+.tab-sel-count{font-size:10px;color:var(--muted);margin-left:auto;white-space:nowrap}
 
 /* Sidebar footer */
 .sidebar-foot{
@@ -417,6 +430,12 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);
   }
   #tabs::-webkit-scrollbar{display:none}
   .tier-label{display:none}
+  .tab-actions{
+    flex-shrink:0;padding:0 8px 0 0;gap:3px;
+    border-right:1px solid var(--border);margin-right:4px;
+  }
+  .tab-sel-count{display:none}
+  .tab-action-btn{font-size:9px;padding:3px 7px}
   .tab{
     flex-direction:column;gap:1px;
     padding:4px 7px;min-width:fit-content;
@@ -645,6 +664,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);
   const LS_KEY  = 'anthropic_api_key';
   const LS_BPX  = 'briefing_';
   const LS_UPD  = 'briefing_last_updated';
+  const LS_SEL  = 'selected_countries';
 
   const ls = {
     key:       () => localStorage.getItem(LS_KEY) || '',
@@ -683,11 +703,20 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);
     return { ...data, countries: out };
   }
 
+  // ===== Selected countries persistence =====
+  function loadSelectedCountries() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(LS_SEL));
+      if (Array.isArray(saved)) return new Set(saved.filter(k => COUNTRIES[k]));
+    } catch {}
+    return new Set(Object.keys(COUNTRIES)); // default: all selected
+  }
+
   // ===== State =====
   const briefings = {};
   const state = {
     date: null,
-    country: '__all__',
+    selectedCountries: loadSelectedCountries(),
     category: 'all',
     generating: false,
     // Per-country collapsed state: Tier2/3 start collapsed
@@ -695,6 +724,11 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);
       Object.entries(COUNTRIES).filter(([,v]) => v.tier >= 2).map(([k]) => k)
     ),
   };
+
+  function saveSelectedCountries() {
+    localStorage.setItem(LS_SEL, JSON.stringify([...state.selectedCountries]));
+  }
+
   let abortCtrl = null;
 
   // ===== DOM =====
@@ -767,7 +801,6 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);
     $dateSelect.value = state.date;
     $dateSelect.addEventListener('change', () => {
       state.date = $dateSelect.value;
-      state.country = '__all__';
       render();
     });
   }
@@ -842,7 +875,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);
       ? `${info.label} <small style="font-size:.8em;opacity:.5">${info.cur}</small>`
       : esc(c.label || key);
 
-    const isCollapsed = (state.country === '__all__') && state.collapsed.has(key);
+    const isCollapsed = state.collapsed.has(key);
     const notes = c.notes ? `<div class="country-notes">${esc(c.notes)}</div>` : '';
     const cards = items.map(renderCard).join('');
 
@@ -861,24 +894,24 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);
   function renderTabs() {
     const data = briefings[state.date];
     const TIER_LBL = { 1:'Tier 1 — Exotic', 2:'Tier 2 — EM', 3:'Tier 3 — Major' };
-    let html = '';
+    const total = Object.keys(COUNTRIES).length;
+    const selCount = state.selectedCountries.size;
+
+    let html = `<div class="tab-actions">
+  <button class="tab-action-btn" onclick="_setAllCountries(true)">全選択</button>
+  <button class="tab-action-btn" onclick="_setAllCountries(false)">全解除</button>
+  <span class="tab-sel-count">${selCount}/${total}国</span>
+</div>`;
+
     let curTier = null;
-
-    // "All" tab
-    const totalCount = data
-      ? Object.values(data.countries||{}).reduce((n,c) => n+(c.items||[]).length, 0) : 0;
-    html += `<button class="tab${state.country==='__all__'?' active':''}" onclick="_selCountry('__all__')">
-  すべての国<span class="count">${totalCount}</span>
-</button>`;
-
     Object.entries(COUNTRIES).forEach(([k, v]) => {
       if (v.tier !== curTier) {
         html += `<div class="tier-label">${TIER_LBL[v.tier]}</div>`;
         curTier = v.tier;
       }
-      const cnt = data && data.countries && data.countries[k]
-        ? (data.countries[k].items||[]).length : 0;
-      html += `<button class="tab${state.country===k?' active':''}" onclick="_selCountry('${esc(k)}')">
+      const cnt = data?.countries?.[k] ? (data.countries[k].items||[]).length : 0;
+      const sel = state.selectedCountries.has(k);
+      html += `<button class="tab${sel ? ' selected' : ''}" onclick="_toggleCountrySelect('${esc(k)}')">
   <span>${v.label}<span class="tab-cur"> ${v.cur}</span></span>
   <span class="count">${cnt}</span>
 </button>`;
@@ -887,8 +920,17 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);
   }
 
   // Global handlers (called from inline onclick)
-  window._selCountry = key => {
-    state.country = key;
+  window._toggleCountrySelect = key => {
+    if (state.selectedCountries.has(key)) state.selectedCountries.delete(key);
+    else state.selectedCountries.add(key);
+    saveSelectedCountries();
+    renderTabs();
+    renderContent();
+  };
+  window._setAllCountries = sel => {
+    if (sel) Object.keys(COUNTRIES).forEach(k => state.selectedCountries.add(k));
+    else state.selectedCountries.clear();
+    saveSelectedCountries();
     renderTabs();
     renderContent();
   };
@@ -918,21 +960,16 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);
       `カバー期間: ${data.period?.from||'—'} 〜 ${data.period?.to||'—'}　生成: ${data.generated_at||'—'}`;
 
     let html = '';
-    if (state.country === '__all__') {
-      Object.keys(COUNTRIES).forEach(k => {
-        const c = data.countries && data.countries[k];
-        if (c) html += renderCountry(k, c);
-      });
-      // Extra keys not in COUNTRIES (legacy/unknown)
-      Object.keys(data.countries||{}).forEach(k => {
-        if (COUNTRIES[k]) return;
-        html += renderCountry(k, data.countries[k]);
-      });
-    } else {
-      const c = data.countries && data.countries[state.country];
-      html = c ? renderCountry(state.country, c)
-        : '<div class="empty-state"><h3>この国のデータがありません</h3></div>';
+    if (state.selectedCountries.size === 0) {
+      $content.innerHTML = '<div class="empty-state"><h3>表示する国が選択されていません</h3><p>左の国リストから見たい国を選択してください。</p></div>';
+      $footer.textContent = data.methodology_notes || '';
+      return;
     }
+    Object.keys(COUNTRIES).forEach(k => {
+      if (!state.selectedCountries.has(k)) return;
+      const c = data.countries && data.countries[k];
+      if (c) html += renderCountry(k, c);
+    });
 
     $content.innerHTML = html ||
       '<div class="empty-state"><h3>表示できる項目がありません</h3><p>別のカテゴリフィルターを試してください</p></div>';
@@ -1285,7 +1322,8 @@ Tier3（主要通貨 — 各1件）: EU(EUR), イギリス(GBP), オーストラ
       }
       $dateSelect.value = today;
       state.date = today;
-      state.country = '__all__';
+      state.selectedCountries = new Set(Object.keys(COUNTRIES));
+      saveSelectedCountries();
       render();
       toast('ブリーフィングを生成しました ✓');
     } catch(err) {
