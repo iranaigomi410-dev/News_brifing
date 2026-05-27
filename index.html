@@ -1120,6 +1120,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);
       },
       body: JSON.stringify({
         model: MODEL, max_tokens: MAX_TOKENS, stream: true,
+        tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 15 }],
         messages: [{ role: 'user', content: prompt }],
       }),
     });
@@ -1138,6 +1139,8 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);
     const reader = res.body.getReader();
     const dec = new TextDecoder();
     let full = '', buf = '';
+    // Track current content block type to skip tool_use/tool_result blocks
+    let blockType = 'text';
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
@@ -1149,8 +1152,14 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);
         if (payload === '[DONE]') break;
         try {
           const ev = JSON.parse(payload);
-          const delta = ev?.delta?.text || '';
-          if (delta) { full += delta; onChunk(delta); }
+          // Track block type so we only accumulate text from text blocks
+          if (ev.type === 'content_block_start') {
+            blockType = ev.content_block?.type || 'text';
+          }
+          if (ev.type === 'content_block_delta' && blockType === 'text') {
+            const delta = ev.delta?.text || '';
+            if (delta) { full += delta; onChunk(delta); }
+          }
         } catch {}
       }
     }
@@ -1159,61 +1168,94 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);
 
   // ===== Build prompt =====
   function buildPrompt(date) {
-    return `あなたは日本のメガバンク市場部門FXトレーダー向けのマーケットインテリジェンスブリーフィングを生成するAIです。
-あなたはリアルタイムのウェブ検索はできませんが、学習データ（カットオフ: 2025年8月）に基づいて各国の経済・金融情勢を把握しています。
+    const now = new Date();
+    const jstNow = now.toLocaleString('ja-JP', {
+      timeZone: 'Asia/Tokyo',
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit',
+    });
+    const yd = new Date(now);
+    yd.setDate(yd.getDate() - 1);
+    const yesterday = yd.toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' });
 
-参照日: ${date}
+    return `あなたは日本のメガバンク市場部門FXトレーダー向けのマーケットニュースブリーフィングを生成するAIです。
 
-【最重要ルール】
-1. 「情報がない」「アクセスできない」という理由でitems:[]にしてはいけない。必ず記載すること
-2. 学習データに基づく金融政策スタンス・経済トレンド・地政学リスク・通貨動向を記載すること
-3. confidenceは "medium" 固定、sources は [] でよい（URLを捏造しないこと）
-4. 各フィールドは簡潔に（summaryは1〜2文、backgroundは1文以内または省略可）
-5. 日本語で記述すること
+今日の日付: ${date}（現在: ${jstNow} JST）
+【カバー期間】 ${yesterday} 00:00 JST 〜 ${date} 現在時刻
 
-【対象国・Tier・最低件数（簡潔に）】
-Tier1（エキゾチック通貨 — 各2件）: 南アフリカ(ZAR), トルコ(TRY), ハンガリー(HUF), ポーランド(PLN), チェコ(CZK)
-Tier2（新興国・EM — 各2件）: シンガポール(SGD), メキシコ(MXN), フィリピン(PHP), 米国(USD), タイ(THB), 韓国(KRW), 台湾(TWD)
-Tier3（主要通貨 — 各1件）: EU(EUR), イギリス(GBP), オーストラリア(AUD), カナダ(CAD), スイス(CHF), ニュージーランド(NZD), 日本(JPY), 中国(CNH), インド(INR)
+このカバー期間内に各国・地域で発生した経済・金融・地政学的に重要なニュースをウェブ検索で収集し、ブリーフィングを作成してください。
+カバー期間外の古いニュースは含めないこと。カバー期間内にニュースが見つからない国は items:[] として notes に理由を記載すること。
+
+【ソース方針 — 重要】
+- 現地メディアを最優先で検索・引用すること
+  - 南アフリカ: IOL / Daily Maverick / Business Day / TimesLIVE
+  - トルコ: Hurriyet Daily News / Daily Sabah / Anadolu Agency
+  - ハンガリー: Daily News Hungary / Hungary Today / Telex
+  - ポーランド: Notes from Poland / Polskie Radio / TVP World
+  - チェコ: Czech Radio / Prague Morning / Aktuálně
+  - シンガポール: The Straits Times / CNA / Business Times
+  - メキシコ: El Economista / Reforma / El Financiero
+  - フィリピン: Philippine Daily Inquirer / Manila Times / BusinessMirror
+  - タイ: Bangkok Post / The Nation / Khaosod English
+  - 韓国: Korea Herald / Yonhap News / Korea Times
+  - 台湾: Taiwan News / CNA (Taiwan) / Taipei Times
+  - 各国: Reuters / Bloomberg / FT も可
+- sources には実際の記事URL または公式メディアサイトのURLを記載する
+  （例: {"label":"Daily Maverick","url":"https://dailymaverick.co.za"}）
+- URLを捏造・推測しないこと。自信がないURLはメディアのトップページURLを使う
+
+【対象国・Tier・最低件数】
+Tier1（エキゾチック通貨 — 各2件以上）: 南アフリカ(ZAR), トルコ(TRY), ハンガリー(HUF), ポーランド(PLN), チェコ(CZK)
+Tier2（新興国・EM — 各2件以上）: シンガポール(SGD), メキシコ(MXN), フィリピン(PHP), 米国(USD), タイ(THB), 韓国(KRW), 台湾(TWD)
+Tier3（主要通貨 — 各1件以上）: EU(EUR), イギリス(GBP), オーストラリア(AUD), カナダ(CAD), スイス(CHF), ニュージーランド(NZD), 日本(JPY), 中国(CNH), インド(INR)
 
 【カテゴリ（6種のいずれか）】
 中銀・金融政策 / 経済指標 / 地政学 / 財政 / マーケット直撃（数値必須） / 速報
 
-【asset_tags】 dir: "up" または "down" / asset候補: USD JPY EUR GBP ZAR TRY HUF PLN CZK SGD MXN PHP THB KRW TWD AUD CAD CHF NZD CNH INR 日本株 米国株 JGB 米国債 原油 金
+【asset_tags】 dir: "up" または "down"
+asset候補: USD JPY EUR GBP ZAR TRY HUF PLN CZK SGD MXN PHP THB KRW TWD AUD CAD CHF NZD CNH INR 日本株 米国株 JGB 米国債 原油 金
 
-【出力形式 — 必ず` + '```json' + `コードブロックで出力し、途中で切らずに最後まで出力すること】
+【出力形式 — 必ず` + '```json' + `コードブロックで出力。途中で切らずに最後まで出力すること】
 ` + '```json' + `
 {
   "date": "${date}",
-  "generated_at": "${date}T05:00:00+09:00",
-  "period": {"from": "学習データ（〜2025年8月）ベース", "to": "${date}"},
+  "generated_at": "${jstNow}+09:00",
+  "period": {"from": "${yesterday} 00:00 JST", "to": "${date} ${jstNow.slice(-5)} JST"},
   "countries": {
     "ZAF": {"label": "南アフリカ", "cur": "ZAR", "tier": 1, "items": [
-      {"title": "SARB（南アフリカ準備銀行）の金融政策スタンス", "category": "中銀・金融政策", "is_breaking": false, "summary": "SARBはインフレ圧力緩和を受け利下げサイクルへ。政策金利8.0%付近で推移。", "background": "※学習データ（2025年8月）ベース", "sources": [], "confidence": "medium", "asset_tags": [{"asset": "ZAR", "dir": "up"}]},
-      {"title": "ZAR/JPY概況", "category": "マーケット直撃", "is_breaking": false, "summary": "ZAR/JPY: 推定7.8〜8.2円付近。南ア経常赤字・電力問題がZARの重石。", "background": "", "sources": [], "confidence": "medium", "asset_tags": [{"asset": "ZAR", "dir": "down"}]}
+      {
+        "title": "（記事タイトル）",
+        "category": "中銀・金融政策",
+        "is_breaking": false,
+        "summary": "（1〜2文の要約）",
+        "background": "（背景・文脈、1文以内。不要なら省略可）",
+        "sources": [{"label": "Daily Maverick", "url": "https://dailymaverick.co.za"}],
+        "confidence": "high",
+        "asset_tags": [{"asset": "ZAR", "dir": "up"}]
+      }
     ], "notes": ""},
-    "TUR": {"label": "トルコ", "cur": "TRY", "tier": 1, "items": [...各2件...], "notes": ""},
-    "HUN": {"label": "ハンガリー", "cur": "HUF", "tier": 1, "items": [...各2件...], "notes": ""},
-    "POL": {"label": "ポーランド", "cur": "PLN", "tier": 1, "items": [...各2件...], "notes": ""},
-    "CZE": {"label": "チェコ", "cur": "CZK", "tier": 1, "items": [...各2件...], "notes": ""},
-    "SGP": {"label": "シンガポール", "cur": "SGD", "tier": 2, "items": [...各2件...], "notes": ""},
-    "MEX": {"label": "メキシコ", "cur": "MXN", "tier": 2, "items": [...各2件...], "notes": ""},
-    "PHL": {"label": "フィリピン", "cur": "PHP", "tier": 2, "items": [...各2件...], "notes": ""},
-    "USA": {"label": "米国", "cur": "USD", "tier": 2, "items": [...各2件...], "notes": ""},
-    "THA": {"label": "タイ", "cur": "THB", "tier": 2, "items": [...各2件...], "notes": ""},
-    "KOR": {"label": "韓国", "cur": "KRW", "tier": 2, "items": [...各2件...], "notes": ""},
-    "TWN": {"label": "台湾", "cur": "TWD", "tier": 2, "items": [...各2件...], "notes": ""},
-    "EU":  {"label": "EU", "cur": "EUR", "tier": 3, "items": [...1件...], "notes": ""},
-    "GBR": {"label": "イギリス", "cur": "GBP", "tier": 3, "items": [...1件...], "notes": ""},
-    "AUS": {"label": "オーストラリア", "cur": "AUD", "tier": 3, "items": [...1件...], "notes": ""},
-    "CAN": {"label": "カナダ", "cur": "CAD", "tier": 3, "items": [...1件...], "notes": ""},
-    "CHE": {"label": "スイス", "cur": "CHF", "tier": 3, "items": [...1件...], "notes": ""},
-    "NZL": {"label": "ニュージーランド", "cur": "NZD", "tier": 3, "items": [...1件...], "notes": ""},
-    "JPN": {"label": "日本", "cur": "JPY", "tier": 3, "items": [...1件...], "notes": ""},
-    "CHN": {"label": "中国", "cur": "CNH", "tier": 3, "items": [...1件...], "notes": ""},
-    "IND": {"label": "インド", "cur": "INR", "tier": 3, "items": [...1件...], "notes": ""}
+    "TUR": {"label": "トルコ", "cur": "TRY", "tier": 1, "items": [...各2件以上...], "notes": ""},
+    "HUN": {"label": "ハンガリー", "cur": "HUF", "tier": 1, "items": [...各2件以上...], "notes": ""},
+    "POL": {"label": "ポーランド", "cur": "PLN", "tier": 1, "items": [...各2件以上...], "notes": ""},
+    "CZE": {"label": "チェコ", "cur": "CZK", "tier": 1, "items": [...各2件以上...], "notes": ""},
+    "SGP": {"label": "シンガポール", "cur": "SGD", "tier": 2, "items": [...各2件以上...], "notes": ""},
+    "MEX": {"label": "メキシコ", "cur": "MXN", "tier": 2, "items": [...各2件以上...], "notes": ""},
+    "PHL": {"label": "フィリピン", "cur": "PHP", "tier": 2, "items": [...各2件以上...], "notes": ""},
+    "USA": {"label": "米国", "cur": "USD", "tier": 2, "items": [...各2件以上...], "notes": ""},
+    "THA": {"label": "タイ", "cur": "THB", "tier": 2, "items": [...各2件以上...], "notes": ""},
+    "KOR": {"label": "韓国", "cur": "KRW", "tier": 2, "items": [...各2件以上...], "notes": ""},
+    "TWN": {"label": "台湾", "cur": "TWD", "tier": 2, "items": [...各2件以上...], "notes": ""},
+    "EU":  {"label": "EU", "cur": "EUR", "tier": 3, "items": [...1件以上...], "notes": ""},
+    "GBR": {"label": "イギリス", "cur": "GBP", "tier": 3, "items": [...1件以上...], "notes": ""},
+    "AUS": {"label": "オーストラリア", "cur": "AUD", "tier": 3, "items": [...1件以上...], "notes": ""},
+    "CAN": {"label": "カナダ", "cur": "CAD", "tier": 3, "items": [...1件以上...], "notes": ""},
+    "CHE": {"label": "スイス", "cur": "CHF", "tier": 3, "items": [...1件以上...], "notes": ""},
+    "NZL": {"label": "ニュージーランド", "cur": "NZD", "tier": 3, "items": [...1件以上...], "notes": ""},
+    "JPN": {"label": "日本", "cur": "JPY", "tier": 3, "items": [...1件以上...], "notes": ""},
+    "CHN": {"label": "中国", "cur": "CNH", "tier": 3, "items": [...1件以上...], "notes": ""},
+    "IND": {"label": "インド", "cur": "INR", "tier": 3, "items": [...1件以上...], "notes": ""}
   },
-  "methodology_notes": "学習データ（2025年8月カットオフ）に基づくマーケットインテリジェンス。リアルタイム情報は含まれない。"
+  "methodology_notes": "ウェブ検索による${yesterday} 00:00〜${date}現在のニュース収集。現地メディア優先。"
 }
 ` + '```' + ``;
   }
@@ -1332,6 +1374,8 @@ Tier3（主要通貨 — 各1件）: EU(EUR), イギリス(GBP), オーストラ
       if (err.message.includes('401') || err.message.includes('APIキーが無効')) {
         toast('APIキーエラー。設定を確認してください', 6000);
         showApiKeyModal(false);
+      } else if (err.message === 'Load failed' || err.message === 'Failed to fetch') {
+        toast('通信エラー。ネットワーク接続を確認して再試行してください。', 8000);
       } else {
         toast(`エラー: ${err.message}`, 8000);
       }
