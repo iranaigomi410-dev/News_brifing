@@ -1074,11 +1074,36 @@ dir: "up"（ポジティブ/上昇）または "down"（ネガティブ/下落�
         $genStream.scrollTop = $genStream.scrollHeight;
       });
 
-      // Parse JSON from response
-      const m = fullText.match(/```json\s*([\s\S]+?)\s*```/);
-      if (!m) throw new Error('JSONが見つかりませんでした。再試行してください。');
+      if (!fullText || fullText.trim().length === 0) {
+        throw new Error('APIからの応答が空でした。再試行してください。');
+      }
 
-      const data = normalize(JSON.parse(m[1]));
+      // Parse JSON from response — try multiple formats
+      let data;
+      try {
+        // 1. ```json ... ``` block
+        const m1 = fullText.match(/```json\s*([\s\S]+?)\s*```/);
+        if (m1) { data = normalize(JSON.parse(m1[1])); }
+        else {
+          // 2. ``` ... ``` block (no language label)
+          const m2 = fullText.match(/```\s*([\s\S]+?)\s*```/);
+          if (m2) { data = normalize(JSON.parse(m2[1])); }
+          else {
+            // 3. Raw JSON object — find outermost { ... }
+            const start = fullText.indexOf('{');
+            const end   = fullText.lastIndexOf('}');
+            if (start !== -1 && end > start) {
+              data = normalize(JSON.parse(fullText.slice(start, end + 1)));
+            } else {
+              console.error('[Raw response]', fullText.slice(0, 500));
+              throw new Error('レスポンスからJSONを抽出できませんでした。再試行してください。');
+            }
+          }
+        }
+      } catch(parseErr) {
+        console.error('[Parse error]', parseErr, '\n[Raw]', fullText.slice(0, 1000));
+        throw new Error(`JSON解析エラー: ${parseErr.message}`);
+      }
       ls.set(today, data);
       briefings[today] = data;
 
