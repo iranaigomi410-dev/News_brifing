@@ -386,7 +386,11 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
 /* ===== Mobile ===== */
-#mobile-bottom{display:none}
+/* Hidden on PC; visible only in mobile media query below */
+#mobile-bottom{display:none!important}
+@media (max-width:767px){
+  #mobile-bottom{display:flex!important}
+}
 
 @media (max-width:767px) {
   /* App shell: flex column, full viewport, no overflow */
@@ -437,14 +441,13 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);
   .country-title{font-size:13px}
   .country-notes{font-size:10px;padding:5px 9px}
 
-  /* Mobile bottom bar */
+  /* Mobile bottom bar — flex child (no fixed, avoids iOS Safari tap bug) */
   #mobile-bottom{
-    display:flex;
-    position:fixed;bottom:0;left:0;right:0;
+    display:flex;flex-shrink:0;
     padding:8px 14px;
     padding-bottom:max(8px, env(safe-area-inset-bottom));
     background:var(--sidebar);border-top:1px solid var(--border);
-    z-index:60;gap:10px;align-items:center;
+    gap:10px;align-items:center;
   }
   #mobile-gen-btn{
     flex:1;background:var(--accent);color:#fff;border:none;
@@ -456,16 +459,6 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);
   #mobile-gen-btn:hover:not(:disabled){background:var(--accent2)}
   #mobile-gen-btn:disabled{opacity:.45;cursor:not-allowed}
   #mobile-foot-meta{font-size:10px;color:var(--muted);text-align:right;flex-shrink:0;line-height:1.5}
-
-  /* Generating overlay covers just the main area */
-  .gen-overlay{border-radius:0}
-}
-
-/* PC: ensure content doesn't stretch too wide on ultrawide screens */
-@media (min-width:1400px) {
-  .main{max-width:1140px}
-  .app{justify-content:center}
-  .app .sidebar{position:sticky;left:0}
 }
 </style>
 </head>
@@ -522,6 +515,14 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);
       </div>
       <div class="gen-stream" id="gen-stream"></div>
       <button class="gen-stop-btn" id="gen-stop">停止</button>
+    </div>
+  </div>
+  <!-- Mobile bottom bar: inside .app so it's a flex child, not fixed (avoids iOS tap bug) -->
+  <div id="mobile-bottom">
+    <button id="mobile-gen-btn">⚡ 今すぐ更新</button>
+    <div id="mobile-foot-meta">
+      <div id="mobile-last-upd"></div>
+      <div id="mobile-api-status" style="cursor:pointer;text-decoration:underline dotted"></div>
     </div>
   </div>
 </div>
@@ -1271,13 +1272,5 @@ asset候補: USD JPY EUR GBP AUD CAD CHF NZD ZAR TRY HUF PLN CZK SGD MXN PHP THB
 })();
 </script>
 
-<!-- Mobile bottom bar (hidden on PC via CSS) -->
-<div id="mobile-bottom">
-  <button id="mobile-gen-btn">⚡ 今すぐ更新</button>
-  <div id="mobile-foot-meta">
-    <div id="mobile-last-upd"></div>
-    <div id="mobile-api-status" style="cursor:pointer;text-decoration:underline dotted"></div>
-  </div>
-</div>
 </body>
 </html>
