@@ -364,8 +364,9 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);
 #toast{
   position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(14px);
   background:var(--text);color:var(--bg);
-  border-radius:8px;padding:7px 14px;font-size:12px;font-weight:600;
-  opacity:0;pointer-events:none;transition:all .22s;z-index:200;white-space:nowrap;
+  border-radius:8px;padding:8px 16px;font-size:12px;font-weight:600;
+  opacity:0;pointer-events:none;transition:all .22s;z-index:200;
+  max-width:80vw;word-break:break-word;text-align:center;line-height:1.5;
 }
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
@@ -951,8 +952,16 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);
       }),
     });
     if (!res.ok) {
-      const M = { 401:'APIキーが無効です。設定を確認してください。', 429:'レート制限中です。しばらく後に再試行してください。', 500:'Anthropicサーバーエラーです。再試行してください。' };
-      throw new Error(M[res.status] || `APIエラー (${res.status})`);
+      let detail = '';
+      try { const b = await res.json(); detail = b?.error?.message || ''; } catch {}
+      const M = {
+        400: `リクエストが不正です。${detail ? detail : 'モデル名またはパラメータを確認してください。'}`,
+        401: 'APIキーが無効です。設定を確認してください。',
+        403: `アクセス権限がありません。${detail || ''}`,
+        429: 'レート制限中です。しばらく後に再試行してください。',
+        500: 'Anthropicサーバーエラーです。再試行してください。',
+      };
+      throw new Error(M[res.status] || `APIエラー (${res.status})${detail ? ': ' + detail : ''}`);
     }
     const reader = res.body.getReader();
     const dec = new TextDecoder();
@@ -1087,13 +1096,13 @@ dir: "up"（ポジティブ/上昇）または "down"（ネガティブ/下落�
       toast('ブリーフィングを生成しました ✓');
     } catch(err) {
       if (err.name === 'AbortError') return;
-      if (err.message.includes('401')) {
-        toast('APIキーエラー。設定を確認してください', 4500);
+      console.error('[API Error]', err);
+      if (err.message.includes('401') || err.message.includes('APIキーが無効')) {
+        toast('APIキーエラー。設定を確認してください', 6000);
         showApiKeyModal(false);
       } else {
-        toast(`エラー: ${err.message}`, 5000);
+        toast(`エラー: ${err.message}`, 8000);
       }
-      console.error(err);
     } finally {
       setGenerating(false);
     }
