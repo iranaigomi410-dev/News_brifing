@@ -386,25 +386,86 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
 /* ===== Mobile ===== */
+#mobile-bottom{display:none}
+
 @media (max-width:767px) {
-  .app{grid-template-columns:1fr;height:auto;overflow:auto}
-  .sidebar{height:auto;overflow:visible}
+  /* App shell: flex column, full viewport, no overflow */
+  .app{
+    display:flex;flex-direction:column;
+    grid-template-columns:unset;
+    height:100vh;height:100dvh;overflow:hidden;
+  }
+  /* Sidebar becomes a compact sticky top bar */
+  .sidebar{
+    flex-shrink:0;height:auto;overflow:visible;
+    border-right:none;border-bottom:1px solid var(--border);
+  }
+  .sidebar-head{padding:8px 12px}
+  .logo{font-size:12px;margin-bottom:5px}
+  .logo span{display:none}                    /* hide subtitle on mobile */
+  .sidebar-controls select{font-size:11px;padding:4px 6px}
+  .icon-btn{width:28px;height:28px;font-size:12px}
   #tabs{
-    flex-direction:row;flex:none;overflow-x:auto;overflow-y:hidden;
-    padding:5px 6px;scrollbar-width:none;
+    flex-direction:row;flex:none;
+    overflow-x:auto;overflow-y:hidden;
+    padding:3px 8px;border-top:1px solid var(--border);
+    scrollbar-width:none;
   }
   #tabs::-webkit-scrollbar{display:none}
   .tier-label{display:none}
-  .tab{flex-direction:column;gap:1px;padding:5px 9px;min-width:fit-content;text-align:center}
+  .tab{
+    flex-direction:column;gap:1px;
+    padding:4px 7px;min-width:fit-content;
+    text-align:center;font-size:11px;
+  }
   .tab .tab-cur{display:none}
-  .tab .count{margin-left:0}
-  .sidebar-foot{flex-direction:row;align-items:center;flex-wrap:wrap}
-  .gen-btn{flex:1;min-width:120px}
-  .main{height:calc(100vh - 155px)}
-  .scroll-area{height:calc(100dvh - 155px)}
-  #content{padding:12px 12px 50px}
-  .cat-bar{padding:7px 10px}
-  .period-bar{padding:3px 12px;font-size:10px}
+  .tab .count{margin-left:0;font-size:9px}
+  .sidebar-foot{display:none}                 /* hidden — use bottom bar */
+
+  /* Main: fills remaining height, scrolls internally */
+  .main{flex:1;overflow:hidden;min-height:0;height:auto}
+  .scroll-area{height:100%;padding-bottom:72px;-webkit-overflow-scrolling:touch}
+  #content{padding:10px 10px 10px;gap:12px}
+  .cat-bar{padding:6px 10px;gap:4px}
+  .cat-filter{font-size:11px;padding:3px 9px}
+  .period-bar{padding:3px 10px;font-size:10px}
+
+  /* Compact card styles on mobile */
+  .card{padding:10px 12px}
+  .card-title{font-size:12px}
+  .card-summary{font-size:11px}
+  .country-title{font-size:13px}
+  .country-notes{font-size:10px;padding:5px 9px}
+
+  /* Mobile bottom bar */
+  #mobile-bottom{
+    display:flex;
+    position:fixed;bottom:0;left:0;right:0;
+    padding:8px 14px;
+    padding-bottom:max(8px, env(safe-area-inset-bottom));
+    background:var(--sidebar);border-top:1px solid var(--border);
+    z-index:60;gap:10px;align-items:center;
+  }
+  #mobile-gen-btn{
+    flex:1;background:var(--accent);color:#fff;border:none;
+    border-radius:8px;padding:10px 14px;font-size:13px;font-family:inherit;
+    cursor:pointer;font-weight:700;
+    display:flex;align-items:center;justify-content:center;gap:5px;
+    transition:background .15s;
+  }
+  #mobile-gen-btn:hover:not(:disabled){background:var(--accent2)}
+  #mobile-gen-btn:disabled{opacity:.45;cursor:not-allowed}
+  #mobile-foot-meta{font-size:10px;color:var(--muted);text-align:right;flex-shrink:0;line-height:1.5}
+
+  /* Generating overlay covers just the main area */
+  .gen-overlay{border-radius:0}
+}
+
+/* PC: ensure content doesn't stretch too wide on ultrawide screens */
+@media (min-width:1400px) {
+  .main{max-width:1140px}
+  .app{justify-content:center}
+  .app .sidebar{position:sticky;left:0}
 }
 </style>
 </head>
@@ -651,8 +712,11 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);
   const $genPct     = $('gen-pct');
   const $genEta     = $('gen-eta');
   const $genElapsed = $('gen-elapsed');
-  const $genStopBtn = $('gen-stop');
-  const $genBtn     = $('gen-btn');
+  const $genStopBtn   = $('gen-stop');
+  const $genBtn       = $('gen-btn');
+  const $mobileGenBtn = $('mobile-gen-btn');
+  const $mobileLastUpd = $('mobile-last-upd');
+  const $mobileApiStatus = $('mobile-api-status');
   const $refreshBtn = $('refresh-btn');
   const $toast      = $('toast');
 
@@ -873,9 +937,11 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);
       '<div class="empty-state"><h3>表示できる項目がありません</h3><p>別のカテゴリフィルターを試してください</p></div>';
 
     const lu = localStorage.getItem(LS_UPD);
-    $lastUpd.textContent = lu
+    const luStr = lu
       ? '更新: ' + new Date(lu).toLocaleString('ja-JP',{timeZone:'Asia/Tokyo',month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})
       : '';
+    $lastUpd.textContent = luStr;
+    $mobileLastUpd.textContent = luStr;
     $footer.textContent = data.methodology_notes || '';
   }
 
@@ -889,7 +955,9 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);
   // ===== API key status =====
   function updateApiStatus() {
     const k = ls.key();
-    $apiStatus.textContent = k ? ls.mask(k) : 'APIキー未設定';
+    const statusTxt = k ? ls.mask(k) : 'APIキー未設定';
+    $apiStatus.textContent = statusTxt;
+    $mobileApiStatus.textContent = statusTxt;
   }
 
   // ===== API Key Modal =====
@@ -952,6 +1020,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);
     state.generating = on;
     $genOverlay.classList.toggle('hidden', !on);
     $genBtn.disabled = on;
+    $mobileGenBtn.disabled = on;
     $refreshBtn.disabled = on;
     if (!on) {
       $genStream.textContent = '';
@@ -1020,76 +1089,67 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);
 
   // ===== Build prompt =====
   function buildPrompt(date) {
-    const yDate = new Date(date); yDate.setDate(yDate.getDate()-1);
-    const yStr  = yDate.toLocaleDateString('sv-SE');
+    return `あなたは日本のメガバンク市場部門FXトレーダー向けのマーケットインテリジェンスブリーフィングを生成するAIです。
+あなたはリアルタイムのウェブ検索はできませんが、学習データ（カットオフ: 2025年8月）に基づいて各国の経済・金融情勢を詳しく把握しています。
 
-    return `あなたは日本のメガバンク市場部門トレーダー向けのニュースブリーフィングを作成するAIアシスタントです。
+参照日: ${date}
 
-今日の日付（JST）: ${date}
-カバー期間: ${yStr} 00:00 JST 〜 ${date} 05:00 JST
+【最重要ルール】
+1. 「リアルタイム情報がない」「アクセスできない」という理由でitems:[]にしてはいけない。必ず内容を記載すること
+2. あなたの学習データに基づく各国の金融政策スタンス・経済トレンド・地政学リスク・通貨動向を記載すること
+3. confidenceは "medium"（学習データベース）を使用
+4. sources は空配列 [] でよい（URLを捏造しないこと）
+5. 日本語で記述すること
 
-以下の21か国について、カバー期間内に公開・発表されたニュース・データを収集し、指定のJSONスキーマで出力してください。
+【対象国・Tier（必ず全21か国を出力）】
+Tier1（エキゾチック通貨 — 3件以上/国）: 南アフリカ(ZAR), トルコ(TRY), ハンガリー(HUF), ポーランド(PLN), チェコ(CZK)
+Tier2（新興国・EM — 2件以上/国）: シンガポール(SGD), メキシコ(MXN), フィリピン(PHP), 米国(USD), タイ(THB), 韓国(KRW), 台湾(TWD)
+Tier3（主要通貨 — 1件以上/国）: EU(EUR), イギリス(GBP), オーストラリア(AUD), カナダ(CAD), スイス(CHF), ニュージーランド(NZD), 日本(JPY), 中国(CNH), インド(INR)
 
-【対象国とTier（通貨コード基準）】
-Tier1 — エキゾチック通貨（3件以上/国必須）: 南アフリカ(ZAR), トルコ(TRY), ハンガリー(HUF), ポーランド(PLN), チェコ(CZK)
-Tier2 — 新興国・主要EM（2件以上/国）: シンガポール(SGD), メキシコ(MXN), フィリピン(PHP), 米国(USD), タイ(THB), 韓国(KRW), 台湾(TWD)
-Tier3 — 主要通貨（1件以上/国）: EU(EUR), イギリス(GBP), オーストラリア(AUD), カナダ(CAD), スイス(CHF), ニュージーランド(NZD), 日本(JPY), 中国(CNH), インド(INR)
+【カテゴリ（必ずこの6種のいずれか）】
+- 中銀・金融政策: 中央銀行の政策スタンス・金利動向・フォワードガイダンス（SARB/CBT/MNB/NBP/CNBを含む）
+- 経済指標: GDP・CPI・雇用・PMI等の傾向と最新動向
+- 地政学: 政治リスク・外交・選挙・紛争情勢
+- 財政: 財政政策・国債・格付けの動向
+- マーケット直撃: 為替・株価・利回りの水準（推定値でよいので必ず数値を含めること）
+- 速報: 特に重要な構造変化・政策転換
 
-【カテゴリ定義】（必ずこの7種のいずれかを使うこと）
-- 中銀・金融政策: FRB・日銀・ECB・BOE・SARB・CBT・MNB・NBP・CNB等の発言・決定・議事録
-- 経済指標: GDP・CPI・雇用統計・PMI・貿易収支等の発表
-- 地政学: 紛争・制裁・外交・選挙・政変
-- 財政: 予算・国債・財政政策・格付け変更
-- マーケット直撃: 為替レート・株価指数・国債利回り（必ず具体的数値を含めること）
-- 速報: 市場に即時影響するブレイキングニュース（is_breaking: true にすること）
+【アセット影響タグ】各itemにasset_tagsを付与（dir: "up" または "down"）
+asset候補: USD JPY EUR GBP AUD CAD CHF NZD ZAR TRY HUF PLN CZK SGD MXN PHP THB KRW TWD CNH INR 日本株 米国株 欧州株 JGB 米国債 原油 金
 
-【アセット影響タグ】
-各itemのasset_tagsに影響アセットと方向感を付与すること。
-asset候補: USD JPY EUR GBP AUD CAD CHF NZD ZAR TRY HUF PLN CZK SGD MXN PHP THB KRW TWD CNH INR 日本株 米国株 欧州株 JGB 米国債 原油 金 銀 銅
-dir: "up"（ポジティブ/上昇）または "down"（ネガティブ/下落）
-
-【ルール】
-1. カバー期間外の記事は items に含めないこと
-2. 掲載日が不明な情報は除外（background フィールドへの背景記載は可）
-3. マーケット直撃には必ず具体的数値を含めること
-4. 情報がない場合は items:[] にして notes に「カバー期間内の情報なし」と記載
-5. URLは実在確認できるもののみ（架空URL禁止）
-6. 日本語で記述すること
-
-【出力形式】
-\`\`\`json
+【出力形式 — 必ず` + '```json' + `コードブロックで出力】
+` + '```json' + `
 {
   "date": "${date}",
   "generated_at": "${date}T05:00:00+09:00",
-  "period": {"from": "${yStr} 00:00 JST", "to": "${date} 05:00 JST"},
+  "period": {"from": "学習データ（〜2025年8月）ベース", "to": "${date}"},
   "countries": {
-    "ZAF": {"label": "南アフリカ", "tier": 1, "items": [{"title": "...", "category": "中銀・金融政策", "is_breaking": false, "summary": "...", "background": "...", "sources": [{"label": "...", "url": "..."}], "confidence": "high", "asset_tags": [{"asset": "ZAR", "dir": "up"}]}], "notes": ""},
-    "TUR": {"label": "トルコ", "tier": 1, "items": [...], "notes": ""},
-    "HUN": {"label": "ハンガリー", "tier": 1, "items": [...], "notes": ""},
-    "POL": {"label": "ポーランド", "tier": 1, "items": [...], "notes": ""},
-    "CZE": {"label": "チェコ", "tier": 1, "items": [...], "notes": ""},
-    "SGP": {"label": "シンガポール", "tier": 2, "items": [...], "notes": ""},
-    "MEX": {"label": "メキシコ", "tier": 2, "items": [...], "notes": ""},
-    "PHL": {"label": "フィリピン", "tier": 2, "items": [...], "notes": ""},
-    "USA": {"label": "米国", "tier": 2, "items": [...], "notes": ""},
-    "THA": {"label": "タイ", "tier": 2, "items": [...], "notes": ""},
-    "KOR": {"label": "韓国", "tier": 2, "items": [...], "notes": ""},
-    "TWN": {"label": "台湾", "tier": 2, "items": [...], "notes": ""},
-    "EU":  {"label": "EU", "tier": 3, "items": [...], "notes": ""},
-    "GBR": {"label": "イギリス", "tier": 3, "items": [...], "notes": ""},
-    "AUS": {"label": "オーストラリア", "tier": 3, "items": [...], "notes": ""},
-    "CAN": {"label": "カナダ", "tier": 3, "items": [...], "notes": ""},
-    "CHE": {"label": "スイス", "tier": 3, "items": [...], "notes": ""},
-    "NZL": {"label": "ニュージーランド", "tier": 3, "items": [...], "notes": ""},
-    "JPN": {"label": "日本", "tier": 3, "items": [...], "notes": ""},
-    "CHN": {"label": "中国", "tier": 3, "items": [...], "notes": ""},
-    "IND": {"label": "インド", "tier": 3, "items": [...], "notes": ""}
+    "ZAF": {"label": "南アフリカ", "cur": "ZAR", "tier": 1, "items": [{"title": "...", "category": "中銀・金融政策", "is_breaking": false, "summary": "（SARBの政策スタンス・ZARの動向等を記述）", "background": "※学習データ（2025年8月時点）に基づく情報", "sources": [], "confidence": "medium", "asset_tags": [{"asset": "ZAR", "dir": "down"}]}], "notes": ""},
+    "TUR": {"label": "トルコ", "cur": "TRY", "tier": 1, "items": [...最低3件...], "notes": ""},
+    "HUN": {"label": "ハンガリー", "cur": "HUF", "tier": 1, "items": [...最低3件...], "notes": ""},
+    "POL": {"label": "ポーランド", "cur": "PLN", "tier": 1, "items": [...最低3件...], "notes": ""},
+    "CZE": {"label": "チェコ", "cur": "CZK", "tier": 1, "items": [...最低3件...], "notes": ""},
+    "SGP": {"label": "シンガポール", "cur": "SGD", "tier": 2, "items": [...最低2件...], "notes": ""},
+    "MEX": {"label": "メキシコ", "cur": "MXN", "tier": 2, "items": [...最低2件...], "notes": ""},
+    "PHL": {"label": "フィリピン", "cur": "PHP", "tier": 2, "items": [...最低2件...], "notes": ""},
+    "USA": {"label": "米国", "cur": "USD", "tier": 2, "items": [...最低2件...], "notes": ""},
+    "THA": {"label": "タイ", "cur": "THB", "tier": 2, "items": [...最低2件...], "notes": ""},
+    "KOR": {"label": "韓国", "cur": "KRW", "tier": 2, "items": [...最低2件...], "notes": ""},
+    "TWN": {"label": "台湾", "cur": "TWD", "tier": 2, "items": [...最低2件...], "notes": ""},
+    "EU":  {"label": "EU", "cur": "EUR", "tier": 3, "items": [...最低1件...], "notes": ""},
+    "GBR": {"label": "イギリス", "cur": "GBP", "tier": 3, "items": [...最低1件...], "notes": ""},
+    "AUS": {"label": "オーストラリア", "cur": "AUD", "tier": 3, "items": [...最低1件...], "notes": ""},
+    "CAN": {"label": "カナダ", "cur": "CAD", "tier": 3, "items": [...最低1件...], "notes": ""},
+    "CHE": {"label": "スイス", "cur": "CHF", "tier": 3, "items": [...最低1件...], "notes": ""},
+    "NZL": {"label": "ニュージーランド", "cur": "NZD", "tier": 3, "items": [...最低1件...], "notes": ""},
+    "JPN": {"label": "日本", "cur": "JPY", "tier": 3, "items": [...最低1件...], "notes": ""},
+    "CHN": {"label": "中国", "cur": "CNH", "tier": 3, "items": [...最低1件...], "notes": ""},
+    "IND": {"label": "インド", "cur": "INR", "tier": 3, "items": [...最低1件...], "notes": ""}
   },
-  "methodology_notes": "..."
+  "methodology_notes": "学習データ（2025年8月カットオフ）に基づくマーケットインテリジェンスブリーフィング。リアルタイム情報は含まれない。毎朝5時のスケジュールエージェント（WebSearch使用）が実際のニュースを提供する。"
 }
-\`\`\``;
+` + '```' + ``;
   }
-
   // ===== Generate briefing =====
   async function generateBriefing() {
     const k = ls.key();
@@ -1199,7 +1259,9 @@ dir: "up"（ポジティブ/上昇）または "down"（ネガティブ/下落�
 
   // ===== Event listeners =====
   $genBtn.addEventListener('click', generateBriefing);
+  $mobileGenBtn.addEventListener('click', generateBriefing);
   $refreshBtn.addEventListener('click', generateBriefing);
+  $mobileApiStatus.addEventListener('click', () => showApiKeyModal(false));
 
   // ===== Init =====
   loadInitialData();
@@ -1208,5 +1270,14 @@ dir: "up"（ポジティブ/上昇）または "down"（ネガティブ/下落�
 
 })();
 </script>
+
+<!-- Mobile bottom bar (hidden on PC via CSS) -->
+<div id="mobile-bottom">
+  <button id="mobile-gen-btn">⚡ 今すぐ更新</button>
+  <div id="mobile-foot-meta">
+    <div id="mobile-last-upd"></div>
+    <div id="mobile-api-status" style="cursor:pointer;text-decoration:underline dotted"></div>
+  </div>
+</div>
 </body>
 </html>
