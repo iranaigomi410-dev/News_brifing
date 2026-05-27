@@ -285,6 +285,21 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);
   line-height:1.5;white-space:pre-wrap;word-break:break-all;
   mask-image:linear-gradient(to top,transparent,black 35%);
 }
+.gen-progress-wrap{width:min(420px,84vw)}
+.gen-bar-track{
+  height:5px;background:var(--border);border-radius:99px;
+  overflow:hidden;margin-bottom:8px;
+}
+.gen-bar-fill{
+  height:100%;width:0%;border-radius:99px;
+  background:linear-gradient(90deg,var(--accent2),var(--accent));
+  transition:width .6s ease;
+}
+.gen-stats{
+  display:flex;justify-content:space-between;align-items:center;
+  font-size:11px;color:var(--dim);
+}
+.gen-stats-pct{font-weight:700;color:var(--accent);font-size:13px}
 .gen-stop-btn{
   background:transparent;color:var(--muted);
   border:1px solid var(--border);border-radius:6px;
@@ -436,6 +451,14 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);
     <div id="gen-overlay" class="gen-overlay hidden">
       <div class="gen-spinner"></div>
       <div class="gen-label-text" id="gen-label">ブリーフィングを生成中...</div>
+      <div class="gen-progress-wrap">
+        <div class="gen-bar-track"><div class="gen-bar-fill" id="gen-bar"></div></div>
+        <div class="gen-stats">
+          <span class="gen-stats-pct" id="gen-pct">0%</span>
+          <span id="gen-eta">残り計算中...</span>
+          <span id="gen-elapsed">0秒経過</span>
+        </div>
+      </div>
       <div class="gen-stream" id="gen-stream"></div>
       <button class="gen-stop-btn" id="gen-stop">停止</button>
     </div>
@@ -624,6 +647,10 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);
   const $genOverlay = $('gen-overlay');
   const $genLabel   = $('gen-label');
   const $genStream  = $('gen-stream');
+  const $genBar     = $('gen-bar');
+  const $genPct     = $('gen-pct');
+  const $genEta     = $('gen-eta');
+  const $genElapsed = $('gen-elapsed');
   const $genStopBtn = $('gen-stop');
   const $genBtn     = $('gen-btn');
   const $refreshBtn = $('refresh-btn');
@@ -926,7 +953,13 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);
     $genOverlay.classList.toggle('hidden', !on);
     $genBtn.disabled = on;
     $refreshBtn.disabled = on;
-    if (!on) $genStream.textContent = '';
+    if (!on) {
+      $genStream.textContent = '';
+      $genBar.style.width = '0%';
+      $genPct.textContent = '0%';
+      $genEta.textContent = '残り計算中...';
+      $genElapsed.textContent = '0秒経過';
+    }
   }
   $genStopBtn.addEventListener('click', () => {
     if (abortCtrl) abortCtrl.abort();
@@ -1064,15 +1097,45 @@ dir: "up"（ポジティブ/上昇）または "down"（ネガティブ/下落�
 
     setGenerating(true);
     const today = todayJST();
+    let tickTimer = null;
 
     try {
       const prompt = buildPrompt(today);
       $genLabel.textContent = 'ブリーフィングを生成中...';
 
+      // Progress tracking
+      const EST_CHARS = 28000; // typical full JSON for 21 countries
+      let charsReceived = 0;
+      const startTime = Date.now();
+
+      const fmtSec = s => s < 60 ? `${s}秒` : `${Math.floor(s/60)}分${s%60}秒`;
+
+      tickTimer = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - startTime) / 1000);
+        $genElapsed.textContent = `${fmtSec(elapsed)}経過`;
+        if (charsReceived > 200) {
+          const rate = charsReceived / Math.max(elapsed, 1);
+          const remaining = Math.max(0, Math.round((EST_CHARS - charsReceived) / rate));
+          $genEta.textContent = remaining > 0 ? `残り約${fmtSec(remaining)}` : 'まもなく完了...';
+        }
+      }, 1000);
+
       const fullText = await callAPI(k, prompt, chunk => {
+        charsReceived += chunk.length;
         $genStream.textContent += chunk;
         $genStream.scrollTop = $genStream.scrollHeight;
+        // Update progress bar (cap at 95% until done)
+        const pct = Math.min(95, Math.round(charsReceived / EST_CHARS * 100));
+        $genBar.style.width = pct + '%';
+        $genPct.textContent = pct + '%';
       });
+
+      clearInterval(tickTimer);
+      $genBar.style.width = '100%';
+      $genPct.textContent = '100%';
+      $genEta.textContent = '完了!';
+      const totalSec = Math.floor((Date.now() - startTime) / 1000);
+      $genElapsed.textContent = `${fmtSec(totalSec)}経過`;
 
       if (!fullText || fullText.trim().length === 0) {
         throw new Error('APIからの応答が空でした。再試行してください。');
@@ -1129,6 +1192,7 @@ dir: "up"（ポジティブ/上昇）または "down"（ネガティブ/下落�
         toast(`エラー: ${err.message}`, 8000);
       }
     } finally {
+      clearInterval(tickTimer);
       setGenerating(false);
     }
   }
